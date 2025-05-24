@@ -1,7 +1,13 @@
 const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 const { exec } = require('child_process');
-const { autoUpdater } = require('electron-updater');
+
+let autoUpdater;
+try {
+    autoUpdater = require('electron-updater').autoUpdater;
+} catch (e) {
+    console.warn("⚠ Could not load 'electron-updater'. It might be missing in dev mode or not bundled.");
+}
 
 let mainWindow = null;
 let phpServerProcess = null;
@@ -13,7 +19,7 @@ const startPHPServer = () => {
         ? path.join(process.resourcesPath, 'app.asar.unpacked', 'php')
         : path.join(__dirname, 'php');
 
-    const phpExecutable = 'C:\\xampp\\php\\php.exe'; // Update if needed
+    const phpExecutable = 'C:\\xampp\\php\\php.exe'; // Change if needed
     const phpCommand = `"${phpExecutable}" -S 127.0.0.1:8000 -t "${phpFolder}"`;
 
     console.log(`🚀 Starting PHP Server: ${phpCommand}`);
@@ -62,6 +68,8 @@ const createMainWindow = () => {
 
 // 🔄 Auto Updater Logic
 const setupAutoUpdater = () => {
+    if (!autoUpdater) return;
+
     autoUpdater.checkForUpdatesAndNotify();
 
     autoUpdater.on('update-available', () => {

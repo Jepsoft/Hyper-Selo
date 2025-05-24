@@ -12,6 +12,7 @@
     "electron": "^35.1.2",
     "electron-builder": "^24.13.3",
     "electron-updater": "^6.6.2"
+
   },
   "build": {
     "appId": "com.jepsoft.hyperselo",
@@ -47,8 +48,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "your-github-username",
-        "repo": "your-repo-name"
+        "owner": "Jepsoft",
+        "repo": "Hyper-Selo"
       }
     ]
   }
