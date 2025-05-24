@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order History</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <script src="js/telwind.js"></script>
+    <style>
+        /* Custom styles to enhance Tailwind */
+        .order-history-container {
+            min-height: calc(100vh - 4rem);
+            padding: 2rem;
+            background-color: #f7f7f7;
+        }
+
+        .filter-section {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            margin-bottom: 2rem;
+        }
+
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .order-list-section {
+            border-radius: 0.5rem;
+        }
+
+        .order-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .order-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            margin-bottom: 1rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: transform 0.1s ease-in-out;
+            border-left: 5px solid #f97316;
+            /* Orange accent */
+        }
+
+        .order-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .order-card:hover {
+            transform: scale(1.02);
+        }
+
+        .order-id-display {
+            color: #f97316;
+            /* Orange-500 */
+            font-weight: bold;
+        }
+
+        .order-date-display {
+            color: #718096;
+            /* Gray-600 */
+            font-size: 0.875rem;
+        }
+
+        .order-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .view-details-button {
+            background-color: #f97316;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            margin-bottom: 10px;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        .view-details-button:hover {
+            background-color: #ea580c;
+            /* Orange-600 */
+        }
+
+        .order-preview-section {
+            width: 100%;
+            /* Default width for smaller screens */
+        }
+
+        .receipt-container {
+            border: 1px solid #ccc;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: sticky;
+            width: 116%;
+            top: 2rem;
+            /* Adjust as needed */
+            height: fit-content;
+            /* Only take up necessary height */
+        }
+
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 1rem;
+            border-bottom: 2px dashed #ccc;
+            padding-bottom: 0.5rem;
+        }
+
+        .receipt-details {
+            padding: 0.5rem;
+        }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .receipt-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        .receipt-total {
+            margin-top: 0.8rem;
+            padding-top: 0.5rem;
+            border-top: 2px solid #ccc;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .receipt-date {
+            text-align: right;
+            font-size: 0.75rem;
+            color: #718096;
+            margin-bottom: 0.3rem;
+        }
+
+        .store-name {
+            color: #f97316;
+            /* Orange-500 */
+            font-size: 1.25rem;
+            /* text-lg */
+            font-weight: 600;
+            /* font-semibold */
+        }
+
+        .order-id {
+            color: #dc2626;
+            /* red-600 - example different color */
+            font-weight: 500;
+            /* font-medium */
+        }
+
+        .item-name {
+            color: #4a5568;
+            /* gray-700 */
+        }
+
+        .item-price {
+            color: #16a34a;
+            /* green-600 - example different color */
+            font-weight: 500;
+        }
+
+        .total-amount {
+            color: #f97316;
+            /* orange-500 */
+            font-size: 1rem;
+            /* text-base */
+        }
+
+        /* Custom alert styles */
+        .custom-alert-container {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+        }
+
+        .custom-alert {
+            background-color: #4CAF50;
+            /* Default success color */
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .custom-alert-error {
+            background-color: #f44336;
+        }
+
+        .custom-alert-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: 1rem;
+            opacity: 0.7;
+        }
+
+        .custom-alert-close-btn:hover {
+            opacity: 1;
+        }
+
+        @media (min-width: 768px) {
+            .order-preview-section {
+                width: 30%;
+                /* Adjust width for larger screens */
+            }
+
+            .order-list-section {
+                width: 63%;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="custom-alert-container" id="alert-container">
+    </div>
+    <div class="order-history-container ">
+        <div class="mb-6 filter-section">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Billing History</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div class="filter-group">
+                    <label for="filter-date" class="block text-gray-700 text-sm font-bold mb-2">Filter by Date:</label>
+                    <input type="date" id="filter-date"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-id" class="block text-gray-700 text-sm font-bold mb-2">Filter by Bill ID:</label>
+                    <input type="text" id="filter-id" placeholder="Enter Order ID"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-payment" class="block text-gray-700 text-sm font-bold -mt-4 mb-2">Filter by Paid
+                        By:</label>
+                    <select id="filter-payment"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="">All</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-6 max-h-[70vh] ">
+            <div class="order-list-section ">
+                <h3 class="text-lg font-semibold text-gray-800 pr-4 pt-[8px]">Bill List</h3>
+                <div class="m-5 overflow-y-scroll overflow-x-hidden max-h-[60vh]">
+                    <ul id="order-list" class="order-list ">
+                        <li class="p-4 text-gray-600 text-center">Loading orders...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="order-preview-section">
+                <h3 class="text-lg font-semibold text-gray-800   pt-4 pb-4">Order Preview</h3>
+                <div id="order-details" class="text-gray-700">
+                    <p>Select an order to view details.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const orderList = document.getElementById('order-list');
+            const orderDetailsDiv = document.getElementById('order-details');
+            const filterDateInput = document.getElementById('filter-date');
+            const filterIdInput = document.getElementById('filter-id');
+            const filterPaymentSelect = document.getElementById('filter-payment');
+            const storeName = "Daiya Buffet"; // Define the store name
+            let allOrders = []; // Store all fetched orders
+            let uniquePaymentMethods = new Set(); // To store unique payment methods
+            const alertContainer = document.getElementById('alert-container');
+
+            // Function to show a custom alert
+            function showCustomAlert(message, type = 'success') {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `custom-alert ${type === 'error' ? 'custom-alert-error' : ''}`;
+                alertDiv.innerHTML = `
+                    <span>${message}</span>
+                    <button class="custom-alert-close-btn">&times;</button>
+                `;
+                alertContainer.appendChild(alertDiv);
+
+                const closeButton = alertDiv.querySelector('.custom-alert-close-btn');
+                closeButton.addEventListener('click', () => {
+                    if (alertContainer.contains(alertDiv)) {
+                         alertContainer.removeChild(alertDiv);
+                    }
+                });
+
+                setTimeout(() => {
+                    if (alertContainer.contains(alertDiv)) {
+                        alertContainer.removeChild(alertDiv);
+                    }
+                }, 5000);
+            }
+
+            // Function to fetch orders from the PHP script
+            async function fetchOrders() {
+                orderList.innerHTML = '<li class="p-4 text-gray-600 text-center">Loading orders...</li>';
+                orderDetailsDiv.innerHTML = '<p class="text-gray-600">Select an order to view details.</p>'; // Clear preview
+                uniquePaymentMethods.clear();
+                uniquePaymentMethods.add(""); // Add default "All" option
+
+                try {
+                    const response = await fetch(`http://127.0.0.1:8000/get_ordersh.php`);
+                    const data = await response.json();
+
+                    if (data.error) {
+                        orderList.innerHTML = `<li class="p-4 text-red-500 text-center">Error: ${data.error}</li>`;
+                        showCustomAlert(`Error fetching orders: ${data.error}`, 'error');
+                    } else if (data && data.length > 0) {
+                        allOrders = data; // Store fetched orders
+                        data.forEach(order => {
+                            uniquePaymentMethods.add(order.payment_method);
+                        });
+                        populatePaymentFilter();
+                        // Set the filter date to today
+                        const today = new Date().toISOString().split('T')[0];
+                        filterDateInput.value = today;
+                        filterAndRenderOrders(); // Initial rendering with today's date
+                    } else {
+                        orderList.innerHTML = '<li class="p-4 text-gray-600 text-center">No orders found.</li>';
+                        // Set the filter date to today even if no orders found initially
+                        const today = new Date().toISOString().split('T')[0];
+                        filterDateInput.value = today;
+                        populatePaymentFilter(); // Still populate payment filter
+                        filterAndRenderOrders(); // Attempt to render (will show "No orders match")
+                        // showCustomAlert('No orders found for today initially.');
+                    }
+                } catch (error) {
+                    console.error('Error fetching orders:', error);
+                    orderList.innerHTML = '<li class="p-4 text-red-500 text-center">Error loading orders. Please try again.</li>';
+                    showCustomAlert('Error loading orders. Please try again.', 'error');
+                     // Set the filter date to today even if error
+                    const today = new Date().toISOString().split('T')[0];
+                    filterDateInput.value = today;
+                    populatePaymentFilter();
+                }
+            }
+
+            // Function to populate the payment method filter dropdown
+            function populatePaymentFilter() {
+                filterPaymentSelect.innerHTML = ''; // Clear existing options
+                const allOption = document.createElement('option');
+                allOption.value = "";
+                allOption.textContent = "All";
+                filterPaymentSelect.appendChild(allOption);
+
+                uniquePaymentMethods.forEach(method => {
+                    if (method) { // Ensure not to add another "All" or empty option if already present
+                        const option = document.createElement('option');
+                        option.value = method;
+                        option.textContent = method;
+                        filterPaymentSelect.appendChild(option);
+                    }
+                });
+            }
+
+            // Function to filter orders
+            function filterOrders(dateFilter, idFilter, paymentFilter) {
+                let filtered = allOrders;
+
+                // If an ID filter is present, it takes precedence.
+                // Date filter is ignored when ID filter is active.
+                if (idFilter) {
+                    filtered = filtered.filter(order =>
+                        order.order_id.toString().toLowerCase().includes(idFilter.toLowerCase())
+                    );
+                    // After filtering by ID, optionally filter by payment method
+                    if (paymentFilter) {
+                        filtered = filtered.filter(order => order.payment_method === paymentFilter);
+                    }
+                    return filtered;
+                }
+
+                // If no ID filter, then apply date and payment filters as usual.
+                if (dateFilter) {
+                    filtered = filtered.filter(order => order.order_date === dateFilter);
+                }
+                if (paymentFilter) {
+                    filtered = filtered.filter(order => order.payment_method === paymentFilter);
+                }
+                return filtered;
+            }
+
+
+            // Function to render the order list as modern cards
+            function renderOrderList(orders) {
+                orderList.innerHTML = '';
+                if (orders.length === 0) {
+                    orderList.innerHTML = '<li class="p-4 text-gray-600 text-center">No orders match your filters.</li>';
+                    orderDetailsDiv.innerHTML = '<p class="text-gray-600">Select an order to view details.</p>'; // Clear preview if no orders
+                    return;
+                }
+                orders.forEach(order => {
+                    const orderCard = document.createElement('li');
+                    orderCard.classList.add('order-card');
+                    orderCard.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <h3 class="order-id-display">Order ID: ${order.order_id}</h3>
+                            <p class="order-date-display">${order.order_date}</p>
+                            <p class="order-date-display">${order.payment_method}</p>
+                            <h3 class="order-id-display">Total: LKR ${(parseFloat(order.total_amount) - (parseFloat(order.discount))).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                            <div class="order-actions">
+                                <button class="view-details-button" data-order-id="${order.order_id}">View Details</button>
+                            </div>
+                        </div>
+                    `;
+                    const viewDetailsButton = orderCard.querySelector('.view-details-button');
+                    viewDetailsButton.addEventListener('click', () => showOrderDetails(order));
+                    orderList.appendChild(orderCard);
+                });
+            }
+
+            // Function to display order details as a receipt
+            function showOrderDetails(order) {
+                let detailsHTML = `
+            <div class="receipt-container">
+                <div class="receipt-header">
+                    <h4 class="store-name">${storeName}</h4>
+                    <p class="text-sm text-gray-600">Order Receipt</p>
+                </div>
+                <div class="receipt-details">
+                    <p class="receipt-date">Date: ${order.order_date}</p>
+                    <p class="receipt-item">
+                        <strong class="text-gray-700">Order ID:</strong>
+                        <span class="order-id">${order.order_id}</span>
+                    </p>
+                    <h5 class="text-md font-semibold text-gray-800 mt-2 mb-1">Items:</h5>
+            `;
+
+                if (order.items && order.items.length > 0) {
+                    order.items.forEach(item => {
+                        detailsHTML += `
+                <div class="receipt-item">
+                    <span class="item-name">${item.product_name} (x${item.quantity})</span>
+                    <span class="item-price">LKR ${(item.price * item.quantity).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                `;
+                    });
+
+                    detailsHTML += `
+                    <div class="flex justify-between">
+                        <span>Additional:</span>
+                        <span>LKR ${(parseFloat(order.discount)).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                        <div class="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>LKR ${(parseFloat(order.total_amount)).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Discount:</span>
+                            <span>LKR ${(parseFloat(order.happy_discount)).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                        <div class="receipt-total">
+                            <span>Total:</span>
+                            <span class="total-amount">
+                                LKR ${(parseFloat(order.total_amount) - (parseFloat(order.discount) )).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                        </div>
+                `;
+                } else {
+                    detailsHTML += '<p>No items in this order.</p>';
+                       detailsHTML += `
+                        <div class="receipt-total">
+                            <span>Total:</span>
+                            <span class="total-amount">
+                                LKR ${(parseFloat(order.total_amount) - (parseFloat(order.discount) + parseFloat(order.happy_discount))).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                        </div>
+                        `;
+                }
+
+
+                if (order.payment_method === "unpaid") {
+                    detailsHTML += `
+                <div class="mt-4 flex justify-between">
+                    <button class="card-pay-btn bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded w-1/2 mr-1">Card Pay</button>
+                    <button class="cash-pay-btn bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded w-1/2 ml-1">Cash Pay</button>
+                </div>
+            `;
+                }
+
+                detailsHTML += `</div></div>`;
+                orderDetailsDiv.innerHTML = detailsHTML;
+
+                const cashBtn = document.querySelector(".cash-pay-btn");
+                const cardBtn = document.querySelector(".card-pay-btn");
+
+                if (cashBtn) {
+                    cashBtn.addEventListener("click", () => {
+                        fetch("http://127.0.0.1:8000/updateor.php", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
+                            },
+                            body: `order_id=${encodeURIComponent(order.order_id)}&payid=cash`,
+                        })
+                            .then(response => response.text())
+                            .then(data => {
+                                if (data.includes("success")) {
+                                    showCustomAlert("Cash payment processed successfully!");
+                                    fetchOrders(); 
+                                    orderDetailsDiv.innerHTML = '<p class="text-gray-600">Select an order to view details.</p>';
+                                } else {
+                                    showCustomAlert("Cash payment failed. Please try again.", 'error');
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error:", error);
+                                showCustomAlert("Payment failed. Please try again.", 'error');
+                            });
+                    });
+                }
+
+                if (cardBtn) {
+                    cardBtn.addEventListener("click", () => {
+                        fetch("http://127.0.0.1:8000/updateor.php", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
+                            },
+                            body: `order_id=${encodeURIComponent(order.order_id)}&payid=card`,
+                        })
+                            .then(response => response.text())
+                            .then(data => {
+                                if (data.includes("success")) {
+                                    showCustomAlert("Card payment processed successfully!");
+                                    fetchOrders(); 
+                                    orderDetailsDiv.innerHTML = '<p class="text-gray-600">Select an order to view details.</p>';
+                                } else {
+                                    showCustomAlert("Card payment failed. Please try again.", 'error');
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error:", error);
+                                showCustomAlert("Payment failed. Please try again.", 'error');
+                            });
+                    });
+                }
+            }
+
+
+            // Function to handle filtering and rendering
+            function filterAndRenderOrders() {
+                const selectedDate = filterDateInput.value;
+                const enteredId = filterIdInput.value.trim();
+                const selectedPayment = filterPaymentSelect.value;
+                const filteredOrders = filterOrders(selectedDate, enteredId, selectedPayment);
+                renderOrderList(filteredOrders);
+            }
+
+            // Event listeners for real-time filtering
+            filterDateInput.addEventListener('input', filterAndRenderOrders);
+            filterIdInput.addEventListener('input', filterAndRenderOrders);
+            filterPaymentSelect.addEventListener('change', filterAndRenderOrders);
+
+            // Initial load of all orders and set default filter to today
+            fetchOrders();
+        });
+    </script>
+</body>
+
+</html>

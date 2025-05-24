@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Release and Inventory</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <script src="js/telwind.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .custom-alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+
+        .custom-alert.fade-out {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+
+        .custom-alert.error {
+            background-color: #FF5252;
+        }
+
+        .stock-group {
+            margin-bottom: 1em;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.25rem;
+            padding: 0.5rem;
+        }
+
+        .stock-group-title {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-full">
+
+        <div class="flex-1 p-8">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800">Release Stock</h2>
+
+            <form id="releaseStockForm" class="bg-white shadow-md rounded-md p-6 space-y-4">
+                <div>
+                    <label for="shop_name" class="block text-gray-700 text-sm font-bold mb-2">Shop Name:</label>
+                    <select id="shop_name" name="shop_name"
+                        class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="" disabled selected>Select Shop</option>
+                        <option value="Akurassa">Akurassa</option>
+                        <option value="Walgama">Walgama</option>
+                        <option value="Pallemulla">Pallemulla</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="product_title" class="block text-gray-700 text-sm font-bold mb-2">Product Title:</label>
+                    <select id="product_title" name="product_title"
+                        class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="" disabled selected>Select Title</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="product_brand" class="block text-gray-700 text-sm font-bold mb-2">Product Brand:</label>
+                    <select id="product_brand" name="product_brand"
+                        class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="" disabled selected>Select Brand</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="product_ah" class="block text-gray-700 text-sm font-bold mb-2">AH:</label>
+                    <select id="product_ah" name="product_ah"
+                        class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="" disabled selected>Select AH</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="product_volts" class="block text-gray-700 text-sm font-bold mb-2">Volts:</label>
+                    <select id="product_volts" name="product_volts"
+                        class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="" disabled selected>Select Volts</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="quantity" class="block text-gray-700 text-sm font-bold mb-2">Quantity:</label>
+                    <input type="number" id="quantity" name="quantity" min="1" required
+                        class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <input type="hidden" id="product_id" name="product_id">
+                </div>
+
+                <button type="submit"
+                    class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline">
+                    Release Stock
+                </button>
+            </form>
+            <div id="custom-alert" class="custom-alert" style="display: none;"></div>
+
+            <h2 class="text-xl font-semibold mt-8 mb-4 text-gray-800">Released Stock History</h2>
+            <div class="bg-white  overflow-x-auto">
+                <table class="min-w-full leading-normal">
+                    <thead class="bg-gray-200 text-gray-700">
+                        <tr>
+                            <th
+                                class="px-5 py-3 border-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">
+                                Shop Name
+                            </th>
+                            <th
+                                class="px-5 py-3 border-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">
+                                Title
+                            </th>
+                            <th
+                                class="px-5 py-3 border-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">
+                                Type
+                            </th>
+                            <th
+                                class="px-5 py-3 border-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">
+                                AH
+                            </th>
+                            <th
+                                class="px-5 py-3 border-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">
+                                Volts
+                            </th>
+                            <th
+                                class="px-5 py-3 border-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">
+                                Quantity
+                            </th>
+                            <th
+                                class="px-5 py-3 border-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">
+                                Date
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="releasedStockTableBody" class="text-gray-600 text-sm">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="w-1/3 p-8 bg-gray-200 h-screen overflow-y-auto">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Current Stock</h2>
+            <div id="currentStockContainer" class="bg-white shadow-md rounded-md p-4">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showCustomAlert(message, type = 'success') {
+            const alertDiv = document.getElementById('custom-alert');
+            alertDiv.textContent = message;
+            alertDiv.className = `custom-alert ${type}`;
+            alertDiv.style.display = 'block';
+
+            setTimeout(() => {
+                alertDiv.classList.add('fade-out');
+                setTimeout(() => {
+                    alertDiv.style.display = 'none';
+                    alertDiv.classList.remove('fade-out');
+                }, 500);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('releaseStockForm');
+            const productTitleDropdown = document.getElementById('product_title');
+            const productBrandDropdown = document.getElementById('product_brand');
+            const productAhDropdown = document.getElementById('product_ah');
+            const productVoltsDropdown = document.getElementById('product_volts');
+            const shopNameDropdown = document.getElementById('shop_name');
+            const releasedStockTableBody = document.getElementById('releasedStockTableBody');
+            const currentStockContainer = document.getElementById('currentStockContainer');
+
+            let allCurrentStock = []; // Store all current stock data
+
+            // Function to populate the Title dropdown
+            function populateTitleDropdown() {
+                fetch('http://127.0.0.1:8000/stock_release.php?action=getTitles')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            productTitleDropdown.innerHTML = '<option value="" disabled selected>Select Title</option>';
+                            data.titles.forEach(title => {
+                                const option = document.createElement('option');
+                                option.value = title;
+                                option.textContent = title;
+                                productTitleDropdown.appendChild(option);
+                            });
+                        } else {
+                            showCustomAlert(data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        showCustomAlert('Error fetching titles: ' + error, 'error');
+                    });
+            }
+
+            // Function to populate the Type (brand) dropdown based on the selected title
+            function populateBrandDropdown(selectedTitle) {
+                productBrandDropdown.innerHTML = '<option value="" disabled selected>Select Type</option>';
+                productAhDropdown.innerHTML = '<option value="" disabled selected>Select AH</option>';
+                productVoltsDropdown.innerHTML = '<option value="" disabled selected>Select Volts</option>';
+                if (selectedTitle) {
+                    fetch(`http://127.0.0.1:8000/stock_release.php?action=getBrands&title=${encodeURIComponent(selectedTitle)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                data.brands.forEach(brand => {
+                                    const option = document.createElement('option');
+                                    option.value = brand;
+                                    option.textContent = brand;
+                                    productBrandDropdown.appendChild(option);
+                                });
+                            } else {
+                                showCustomAlert(data.message, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            showCustomAlert('Error fetching types: ' + error, 'error');
+                        });
+                }
+            }
+
+            // Function to populate the AH dropdown based on the selected title and type
+            function populateAhDropdown(selectedTitle, selectedBrand) {
+                productAhDropdown.innerHTML = '<option value="" disabled selected>Select AH</option>';
+                productVoltsDropdown.innerHTML = '<option value="" disabled selected>Select Volts</option>';
+                if (selectedTitle && selectedBrand) {
+                    fetch(`http://127.0.0.1:8000/stock_release.php?action=getAhs&title=${encodeURIComponent(selectedTitle)}&brand=${encodeURIComponent(selectedBrand)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                data.ahs.forEach(ah => {
+                                    const option = document.createElement('option');
+                                    option.value = ah;
+                                    option.textContent = ah;
+                                    productAhDropdown.appendChild(option);
+                                });
+                            } else {
+                                showCustomAlert(data.message, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            showCustomAlert('Error fetching AHs: ' + error, 'error');
+                        });
+                }
+            }
+
+            // Function to populate the Volts dropdown based on the selected title, type and AH
+            function populateVoltsDropdown(selectedTitle, selectedBrand, selectedAh) {
+                productVoltsDropdown.innerHTML = '<option value="" disabled selected>Select Volts</option>';
+                if (selectedTitle && selectedBrand && selectedAh) {
+                    fetch(`http://127.0.0.1:8000/stock_release.php?action=getVolts&title=${encodeURIComponent(selectedTitle)}&brand=${encodeURIComponent(selectedBrand)}&ah=${encodeURIComponent(selectedAh)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success && Array.isArray(data.volts)) {
+                                data.volts.forEach(volt => {
+                                    const option = document.createElement('option');
+                                    option.value = volt;
+                                    option.textContent = volt;
+                                    productVoltsDropdown.appendChild(option);
+                                });
+                            } else {
+                                console.error('Error fetching volts:', data ? data.message : 'Invalid JSON response');
+                                showCustomAlert(data ? data.message : 'Error fetching volts.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching volts:', error);
+                            showCustomAlert('Error fetching volts: ' + error, 'error');
+                        });
+                }
+            }
+
+            // Function to load released stock data
+            function loadReleasedStock() {
+                fetch('http://127.0.0.1:8000/stock_release.php?action=getReleasedStock')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            releasedStockTableBody.innerHTML = '';
+                            data.releasedStock.forEach(item => {
+                                const row = releasedStockTableBody.insertRow();
+                                const shopCell = row.insertCell();
+                               
+                                const titleCell = row.insertCell();
+                                const brandCell = row.insertCell();
+                                const ahCell = row.insertCell();
+                                const voltsCell = row.insertCell();
+                                const quantityCell = row.insertCell();
+                                const dateCell = row.insertCell();
+                                shopCell.classList.add('p-3','border');
+                                brandCell.classList.add('border');
+                                ahCell.classList.add('border');
+                                voltsCell.classList.add('border');
+                                quantityCell.classList.add('border');
+                                dateCell.classList.add('border');
+                                shopCell.textContent = item.shop_name;
+                                titleCell.textContent = item.title;
+                                brandCell.textContent = item.brand;
+                                ahCell.textContent = item.ah;
+                                voltsCell.textContent = item.volts;
+                                quantityCell.textContent = item.quantity;
+                                dateCell.textContent = new Date(item.release_date).toLocaleDateString();
+                            });
+                        } else {
+                            showCustomAlert(data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        showCustomAlert('Error loading released stock: ' + error, 'error');
+                    });
+            }
+
+            // Function to load and display current stock data (initially and on filter)
+            function loadCurrentStock(filterTitle = null) {
+                fetch('http://127.0.0.1:8000/stock_release.php?action=getCurrentStock')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && Array.isArray(data.stock)) {
+                            allCurrentStock = data.stock; // Store all data
+                            displayFilteredCurrentStock(filterTitle);
+                        } else {
+                            currentStockContainer.innerHTML = '<p class="text-gray-600">Error loading stock data.</p>';
+                            if (data && data.message) {
+                                showCustomAlert('Error fetching current stock: ' + data.message, 'error');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        currentStockContainer.innerHTML = '<p class="text-gray-600">Error loading stock data.</p>';
+                        showCustomAlert('Error fetching current stock: ' + error, 'error');
+                    });
+            }
+
+            // Function to display the filtered current stock, grouped by AH and Volts
+            function displayFilteredCurrentStock(filterTitle) {
+                currentStockContainer.innerHTML = '';
+                const filteredStock = filterTitle
+                    ? allCurrentStock.filter(item => item.title === filterTitle)
+                    : allCurrentStock;
+
+                const groupedStock = {};
+                filteredStock.forEach(item => {
+                    const key = `${item.title}-${item.brand}-${item.ah}-${item.volts}`;
+                    if (!groupedStock[key]) {
+                        groupedStock[key] = {
+                            title: item.title,
+                            brand: item.brand,
+                            ah: item.ah,
+                            volts: item.volts,
+                            quantity: 0,
+                        };
+                    }
+                    groupedStock[key].quantity += parseInt(item.quantity, 10);
+                });
+
+                for (const key in groupedStock) {
+                    const group = groupedStock[key];
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'stock-group';
+                    groupDiv.innerHTML = `
+                        <div class="stock-group-title">${group.title} - ${group.brand} - ${group.ah}AH - ${group.volts}V</div>
+                        <p>Quantity: ${group.quantity}</p>
+                    `;
+                    currentStockContainer.appendChild(groupDiv);
+                }
+
+                if (Object.keys(groupedStock).length === 0 && filterTitle) {
+                    currentStockContainer.innerHTML = '<p class="text-gray-600">No stock found for the selected title.</p>';
+                } else if (Object.keys(groupedStock).length === 0) {
+                    currentStockContainer.innerHTML = '<p class="text-gray-600">Current stock is empty.</p>';
+                }
+            }
+
+            // Initial population of the Title dropdown and load released/current stock on page load
+            populateTitleDropdown();
+            loadReleasedStock();
+            loadCurrentStock(); // Load all current stock initially
+
+            // Event listener for Title dropdown change
+            productTitleDropdown.addEventListener('change', () => {
+                const selectedTitle = productTitleDropdown.value;
+                populateBrandDropdown(selectedTitle);
+                loadCurrentStock(selectedTitle); // Filter current stock based on selected title
+                // Reset other dropdowns and hidden product ID
+                productBrandDropdown.value = '';
+                productAhDropdown.innerHTML = '<option value="" disabled selected>Select AH</option>';
+                productVoltsDropdown.innerHTML = '<option value="" disabled selected>Select Volts</option>';
+                document.getElementById('product_id').value = '';
+            });
+
+            // Event listener for Type (brand) dropdown change
+            productBrandDropdown.addEventListener('change', () => {
+                const selectedTitle = productTitleDropdown.value;
+                const selectedBrand = productBrandDropdown.value;
+                populateAhDropdown(selectedTitle, selectedBrand);
+                // Reset the AH and volts dropdowns and hidden product ID if type changes
+                productAhDropdown.value = '';
+                productVoltsDropdown.innerHTML = '<option value="" disabled selected>Select Volts</option>';
+                document.getElementById('product_id').value = '';
+            });
+
+            // Event listener for AH dropdown change
+            productAhDropdown.addEventListener('change', () => {
+                const selectedTitle = productTitleDropdown.value;
+                const selectedBrand = productBrandDropdown.value;
+                const selectedAh = productAhDropdown.value;
+                populateVoltsDropdown(selectedTitle, selectedBrand, selectedAh);
+                // Reset the volts dropdown and hidden product ID if AH changes
+                productVoltsDropdown.value = '';
+                document.getElementById('product_id').value = '';
+            });
+
+            // Event listener for Volts dropdown change
+            productVoltsDropdown.addEventListener('change', () => {
+                const selectedTitle = productTitleDropdown.value;
+                const selectedBrand = productBrandDropdown.value;
+                const selectedAh = productAhDropdown.value;
+                const selectedVolts = productVoltsDropdown.value;
+
+                if (selectedTitle && selectedBrand && selectedAh && selectedVolts) {
+                    fetch(`http://127.0.0.1:8000/stock_release.php?action=getProductId&title=${encodeURIComponent(selectedTitle)}&brand=${encodeURIComponent(selectedBrand)}&ah=${encodeURIComponent(selectedAh)}&volts=${encodeURIComponent(selectedVolts)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.getElementById('product_id').value = data.product_id;
+                            } else {
+                                showCustomAlert(data.message, 'error');
+                                document.getElementById('product_id').value = ''; // Clear product ID on error
+                            }
+                        })
+                        .catch(error => {
+                            showCustomAlert('Error fetching product ID: ' + error, 'error');
+                            document.getElementById('product_id').value = ''; // Clear product ID on error
+                        });
+                } else {
+                    document.getElementById('product_id').value = ''; // Clear product ID if not all are selected
+                }
+            });
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const selectedTitle = productTitleDropdown.value;
+                const selectedBrand = productBrandDropdown.value;
+                const selectedAh = productAhDropdown.value;
+                const selectedVolts = productVoltsDropdown.value;
+                const quantity = document.getElementById('quantity').value;
+                const shopName = shopNameDropdown.value;
+                const productId = document.getElementById('product_id').value;
+
+                if (!selectedTitle || !selectedBrand || !selectedAh || !selectedVolts || !shopName || !quantity || !productId) {
+                    showCustomAlert('Please fill all fields and select a valid product.', 'error');
+                    return;
+                }
+
+                const formData = {
+                    product_id: productId,
+                    quantity: quantity,
+                    shop_name: shopName
+                };
+
+                fetch('http://127.0.0.1:8000/stock_release.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showCustomAlert(data.message);
+                            form.reset();
+                            productVoltsDropdown.innerHTML = '<option value="" disabled selected>Select Volts</option>';
+                            productAhDropdown.innerHTML = '<option value="" disabled selected>Select AH</option>';
+                            productBrandDropdown.innerHTML = '<option value="" disabled selected>Select Type</option>';
+                            productTitleDropdown.value = '';
+                            shopNameDropdown.value = '';
+                            document.getElementById('product_id').value = '';
+                            populateTitleDropdown();
+                            loadReleasedStock();
+                            loadCurrentStock(); // Reload current stock to reflect changes
+                        } else {
+                            showCustomAlert(data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        showCustomAlert('Error releasing stock: ' + error, 'error');
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>

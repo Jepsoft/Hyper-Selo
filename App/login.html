@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper Selo</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/script.js"></script>
+    <script>
+        function login() {
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const messageDiv = document.getElementById('login-message');
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (username === "" || password === "") {
+                messageDiv.textContent = "Please enter both username and password.";
+                messageDiv.className = "text-red-500 text-sm italic mt-2";
+                return;
+            }
+
+            fetch('http://127.0.0.1:8000/login.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+            })
+                .then(response => response.text())
+                .then(data => {
+                    messageDiv.textContent = data;
+                    if (data === "Login successful!") {
+                        messageDiv.className = "text-green-500 text-sm italic mt-2";
+                        localStorage.setItem("username",username);
+                        window.location.href = "main.html";
+                    } else {
+                        messageDiv.className = "text-red-500 text-sm italic mt-2";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    messageDiv.textContent = "An error occurred during login.";
+                    messageDiv.className = "text-red-500 text-sm italic mt-2";
+                });
+        }
+        if(localStorage.getItem("username")){
+            window.location.href = "main.html";
+        }
+    </script>
+    <style>
+        .rounded-3xl {
+            border-radius: 1.5rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 w-full max-w-md">
+        <div class="mb-4 pt-10">
+            <h2 class="text-2xl font-bold text-gray-800 text-center">Login to Jepsoft Pos</h2>
+        </div>
+        <form id="login-form" onsubmit="event.preventDefault(); login();">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
+                    Username
+                </label>
+                <input
+                    class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    id="username" type="text" placeholder="Username">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
+                    Password
+                </label>
+                <input
+                    class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+                    id="password" type="password" placeholder="Password">
+                <p class="text-gray-600 text-xs italic">Need A Support ? <span class="text-green-500">Call 077 483
+                        5253</span></p>
+            </div>
+            <div class="flex items-center justify-between">
+                <button
+                    class="bg-orange-500 rounded-lg w-full hover:bg-orange-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    type="submit">
+                    Sign In
+                </button>
+            </div>
+            <div id="login-message" class="mt-4 text-center"></div>
+        </form>
+        <p class="text-center text-gray-500 text-xs mt-8">
+            &copy; 2025 Jepsoft Pos. All rights reserved.
+        </p>
+    </div>
+</body>
+
+</html>

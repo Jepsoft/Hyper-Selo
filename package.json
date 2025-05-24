@@ -1,0 +1,55 @@
+{
+  "name": "hyper-selo",
+  "version": "1.0.0",
+  "description": "Jepsoft POS System",
+  "author": "Jepsoft",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^35.1.2",
+    "electron-builder": "^24.13.3",
+    "electron-updater": "^6.6.2"
+  },
+  "build": {
+    "appId": "com.jepsoft.hyperselo",
+    "productName": "Hyper Selo",
+    "asar": true,
+    "asarUnpack": [
+      "php/**/*",
+      "uploads/**/*",
+      "vendor/**/*"
+    ],
+    "files": [
+      "main.js",
+      "App/**/*",
+      "php/**/*",
+      "uploads/**/*",
+      "vendor/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "your-github-username",
+        "repo": "your-repo-name"
+      }
+    ]
+  }
+}

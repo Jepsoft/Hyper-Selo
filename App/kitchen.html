@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen & Recipe Manager</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <script src="js/telwind.js"></script>
+    <style>
+        /* Optional: Add some custom styles if needed */
+        /* Style for indicating editing row */
+        .editing-row {
+            background-color: #fff3cd;
+            /* Light yellow background - kept for clear visual editing indicator */
+        }
+
+        /* Optional: Style for fixed height table container scrollbar */
+        .table-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .table-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            /* Light gray track */
+            border-radius: 10px;
+        }
+
+        .table-scroll-container::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            /* Gray thumb */
+            border-radius: 10px;
+        }
+
+        .table-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+            /* Darker gray on hover */
+        }
+
+        /* Custom focus ring color using CSS variables */
+        .focus-outline-orange:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(253, 126, 20, 0.5);
+            /* Orange-500 with transparency */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 font-sans leading-normal tracking-normal">
+    <div class=" ml-10 mr-10  mt-8">
+        <div class="bg-white shadow-lg rounded-lg p-6 mb-8 border border-gray-200">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-900">Kitchen Stock Overview</h2>
+            <div id="kitchen-inventory-container" class="flex flex-wrap gap-2">
+            </div>
+            <div id="inventory-message" class="mt-4 text-sm text-red-500 hidden" role="alert"></div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-8">
+            <div class="bg-white shadow-lg rounded-lg p-6 mb-6 flex-1 border border-gray-200">
+                <h2 id="kitchen-form-title" class="text-xl font-semibold mb-4 text-gray-900">Add New Stock Item</h2>
+
+                <form id="kitchen-ingredient-form" class="space-y-4">
+                    <div>
+                        <label for="kitchen-ingredient-name"
+                            class="block text-sm font-medium text-gray-700 mb-1">Ingredient
+                            Name:</label>
+                        <input type="text" id="kitchen-ingredient-name" placeholder="e.g., All-Purpose Flour"
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-orange-500 focus-outline-orange"
+                            required>
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <div class="flex-1">
+                            <label for="kitchen-ingredient-volume-value"
+                                class="block text-sm font-medium text-gray-700 mb-1">Volume:</label>
+                            <input type="number" id="kitchen-ingredient-volume-value" placeholder="e.g., 1, 500"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-orange-500 focus-outline-orange"
+                                required min="0" step="0.01">
+                        </div>
+                        <div class="w-48">
+                            <label for="kitchen-ingredient-unit"
+                                class="block text-sm font-medium text-gray-700 mb-1">Unit:</label>
+                            <select id="kitchen-ingredient-unit"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-orange-500 focus-outline-orange"
+                                required>
+                                <option value="" disabled selected>Select</option>
+                                <option value="kg">kg</option>
+                                <option value="g">g</option>
+                                <option value="L">L</option>
+                                <option value="ml">ml</option>
+                                <option value="quantity">Quantity</option>
+                                <option value="cups">Cups</option>
+                                <option value="pieces">Pieces</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <button type="button" id="cancel-edit-kitchen-ingredient-btn"
+                            class="w-full bg-gray-600 mr-5 text-white font-semibold rounded-md px-4 py-2 transition duration-200 ease-in-out hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 hidden">
+                            Cancel Edit
+                        </button>
+                        <button type="submit" id="save-kitchen-ingredient-btn"
+                            class="w-full bg-orange-500  text-white font-semibold rounded-md px-4 py-2 transition duration-200 ease-in-out hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                            Add to Kitchen Stock
+                        </button>
+                    </div>
+                </form>
+
+                <div id="kitchen-message" class="mt-4 text-sm hidden" role="alert"></div>
+
+                <h3 class="text-lg font-semibold mt-6 mb-3 text-gray-800">Current Stock</h3>
+                <div class="mb-3">
+                    <label for="kitchen-stock-search" class="sr-only">Search Stock</label>
+                    <input type="text" id="kitchen-stock-search" placeholder="Search stock..."
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-orange-500 focus-outline-orange">
+                </div>
+
+                <div id="kitchen-stock-table-container"
+                    class="overflow-x-auto table-scroll-container border border-gray-300 rounded-md"
+                    style="max-height: 300px;">
+                    <table id="kitchen-stock-table" class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-200 text-gray-700 uppercase text-sm leading-normal sticky top-0">
+                                <th class="py-3 px-6 text-left border-b border-gray-300 border-1 border">ID</th>
+                                <th class="py-3 px-6 text-left border-b border-gray-300 border-1 border">Ingredient</th>
+                                <th class="py-3 px-6 text-left border-b border-gray-300 border-1 border">Volume</th>
+                                <th class="py-3 px-6 text-left border-b border-gray-300 border-1 border">Unit</th>
+                                <th class="py-3 px-6 text-center border-b border-gray-300 border-1 border">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ingredient-table-body" class="text-gray-700 text-sm font-light">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-lg rounded-lg p-6 mb-6 flex-1 border border-gray-200 hidden">
+                <h2 class="text-xl font-semibold mb-4 text-gray-900">Add New Recipe</h2>
+                <div class="mb-4">
+                    <label for="product-select" class="block text-sm font-medium text-gray-700 mb-1">Select Food Item
+                        (This Recipe Is For):</label>
+                    <select id="product-select"
+                        class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:border-orange-500 focus-outline-orange sm:text-sm rounded-md shadow-sm">
+                        <option value="">Loading products...</option>
+                    </select>
+                </div>
+
+                <h3 class="text-lg font-semibold mb-3 text-gray-800">Recipe Ingredients</h3>
+                <div id="recipe-ingredients-container" class="space-y-3 mb-4">
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <button id="add-recipe-ingredient-btn" type="button"
+                        class="bg-gray-700 text-white font-semibold rounded-md px-4 py-2 transition duration-200 ease-in-out hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 text-sm">
+                        + Add Ingredient
+                    </button>
+                    <button id="save-recipe-btn" type="button"
+                        class="bg-orange-500 text-white font-semibold rounded-md px-4 py-2 transition duration-200 ease-in-out hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 text-sm">
+                        Save Recipe
+                    </button>
+                </div>
+                <div id="recipe-message" class="mt-4 text-sm hidden" role="alert"></div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-lg p-6 mb-8 border border-gray-200 hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-900">Your Saved Recipes</h2>
+            <div id="saved-recipes-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+            <div id="saved-recipes-message" class="mt-4 text-sm text-red-500 hidden" role="alert"></div>
+        </div>
+    </div>
+
+    <script defer>
+        let editingRow = null;
+        const kitchenMessageDiv = document.getElementById('kitchen-message');
+        const inventoryContainer = document.getElementById('kitchen-inventory-container');
+        const recipeIngredientsContainer = document.getElementById('recipe-ingredients-container');
+        const productSelect = document.getElementById('product-select');
+        const savedRecipesContainer = document.getElementById('saved-recipes-container');
+        const kitchenFormTitle = document.getElementById('kitchen-form-title');
+        const saveKitchenIngredientBtn = document.getElementById('save-kitchen-ingredient-btn');
+        const cancelEditKitchenIngredientBtn = document.getElementById('cancel-edit-kitchen-ingredient-btn');
+        const recipeMessageDiv = document.getElementById('recipe-message');
+        const savedRecipesMessageDiv = document.getElementById('saved-recipes-message');
+        const kitchenStockSearchInput = document.getElementById('kitchen-stock-search'); // Get search input
+        const ingredientTableBody = document.getElementById('ingredient-table-body'); // Get table body
+
+
+        // Helper function to show messages
+        function showMessage(messageElement, message, type = 'info') {
+            messageElement.innerText = message;
+            messageElement.classList.remove('hidden', 'text-green-600', 'text-red-500', 'text-gray-500');
+            if (type === 'success') {
+                messageElement.classList.add('text-green-600');
+            } else if (type === 'error') {
+                messageElement.classList.add('text-red-500');
+            } else { // info or processing
+                messageElement.classList.add('text-gray-500');
+            }
+            // Optional: Hide message after a few seconds
+            setTimeout(() => {
+                messageElement.classList.add('hidden');
+                messageElement.innerText = '';
+            }, 5000);
+        }
+
+
+        async function postToServer(action, data, messageElement = kitchenMessageDiv, successCallback = null) {
+            showMessage(messageElement, 'Processing...', 'info');
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/manage_kitching.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, ...data })
+                });
+
+                // Read response body as text ONCE
+                const responseText = await response.text();
+
+                let resultMessage = '';
+                let resultJson = null;
+
+                // Try to parse as JSON if possible
+                try {
+                    resultJson = JSON.parse(responseText);
+                    if (resultJson.status === 'error') {
+                        throw new Error(resultJson.message || 'An error occurred.');
+                    }
+                    resultMessage = resultJson.message || 'Operation successful.';
+                } catch (e) {
+                    // If it's not valid JSON, use the raw text
+                    if (!response.ok) {
+                        resultMessage = `HTTP error! status: ${response.status}: ${responseText}`;
+                    } else {
+                        resultMessage = responseText;
+                    }
+                }
+
+                showMessage(messageElement, resultMessage, response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    loadTable();
+                    loadKitchenStockOverview();
+                    if (successCallback) successCallback();
+                }
+
+            } catch (err) {
+                showMessage(messageElement, 'Error: ' + err.message, 'error');
+                console.error("Error during postToServer:", err);
+            }
+        }
+
+
+        async function loadTable() {
+            const tbody = document.getElementById("ingredient-table-body");
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500 no-filter">Loading kitchen stock...</td></tr>'; // Loading indicator
+            // Added no-filter class
+
+            try {
+                const res = await fetch("http://127.0.0.1:8000/manage_kitching.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "fetch_all" })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+
+                const data = await res.json();
+                tbody.innerHTML = ""; // Clear existing rows
+
+                if (data.length === 0) {
+                    const noItemsRow = document.createElement("tr");
+                    noItemsRow.innerHTML = '<td colspan="5" class="text-center py-4 text-gray-500 no-filter">No items in stock.</td>';
+                    noItemsRow.classList.add('no-filter'); // Add no-filter class
+                    tbody.appendChild(noItemsRow);
+                } else {
+                    data.forEach(item => {
+                        const row = document.createElement("tr");
+                        row.dataset.id = item.id; // Store ID on the row element
+                        row.classList.add('hover:bg-gray-100'); // Add hover effect
+                        row.innerHTML = `
+                            <td class="py-3 px-6 text-left whitespace-nowrap border-b border-gray-200 border-1 border">${item.id}</td>
+                            <td class="py-3 px-6 text-left border-b border-gray-200 border-1 border">${item.ingredient}</td>
+                            <td class="py-3 px-6 text-left border-b border-gray-200 border-1 border">${item.volume}</td>
+                            <td class="py-3 px-6 text-left border-b border-gray-200 border-1 border">${item.msh}</td>
+                            <td class="py-3 px-6 text-center border-b border-gray-200 border-1 border">
+                              <button type="button" onclick="editIngredient(this)" class="px-3 py-1 mr-2 focus:outline-none outline-none focus:scale-125 focus:duration-300">
+  <img src="./icons/pen.png" class="rounded-full w-8 h-8" />
+</button>
+
+<button type="button" onclick="deleteIngredient(this)" class="px-3 py-1 focus:outline-none outline-none focus:scale-125 focus:duration-300">
+  <img src="./icons/trash.png" class="rounded-full w-8 h-8" />
+</button>
+
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+                applyTableFilter(); // Apply filter after loading data, regardless of whether there are items
+            } catch (err) {
+                const errorRow = document.createElement("tr");
+                errorRow.innerHTML = `<td colspan="5" class="text-center py-4 text-red-500 no-filter">Error loading stock: ${err.message}</td>`;
+                errorRow.classList.add('no-filter'); // Add no-filter class
+                tbody.innerHTML = ""; // Clear loading indicator before adding error
+                tbody.appendChild(errorRow);
+                console.error("Error loading table:", err);
+            }
+        }
+
+        async function loadKitchenStockOverview() {
+            inventoryContainer.innerHTML = '<p class="text-gray-500">Loading stock overview...</p>';
+            try {
+                const res = await fetch("http://127.0.0.1:8000/manage_kitching.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "fetch_all" })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+
+                const data = await res.json();
+                inventoryContainer.innerHTML = ''; // Clear loading message
+
+                if (data.length === 0) {
+                    inventoryContainer.innerHTML = '<p class="text-gray-500">Your kitchen stock is empty.</p>';
+                } else {
+                    data.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        // Slightly adjusted background/border for overview chips
+                        itemDiv.classList.add('flex', 'items-center', 'bg-gray-100', 'text-gray-800', 'text-sm', 'font-medium', 'px-3', 'py-1.5', 'rounded-full', 'shadow-sm', 'flex-shrink-0', 'border', 'border-gray-300');
+                        itemDiv.innerText = `${item.ingredient} - ${item.volume} ${item.msh}`;
+                        inventoryContainer.appendChild(itemDiv);
+                    });
+                }
+            } catch (err) {
+                inventoryContainer.innerHTML = `<p class="text-red-500">Error loading stock overview: ${err.message}</p>`;
+                console.error("Error loading overview:", err);
+            }
+        }
+
+
+        function resetForm() {
+            document.getElementById("kitchen-ingredient-form").reset();
+            if (editingRow) {
+                // Ensure no-filter rows are not attempting to have editing-row class removed
+                if (!editingRow.classList.contains('no-filter')) {
+                    editingRow.classList.remove('editing-row'); // Remove highlight from previous editing row
+                }
+            }
+            editingRow = null; // Clear editing state
+            kitchenFormTitle.innerText = "Add New Stock Item"; // Reset title
+            saveKitchenIngredientBtn.innerText = "Add to Kitchen Stock"; // Reset button text
+            saveKitchenIngredientBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600', 'focus:ring-blue-500');
+            saveKitchenIngredientBtn.classList.add('bg-orange-500', 'hover:bg-orange-600', 'focus:ring-orange-500');
+            cancelEditKitchenIngredientBtn.classList.add('hidden'); // Hide cancel button
+            // Clear potential validation errors from form fields
+            document.getElementById("kitchen-ingredient-name").classList.remove('border-red-500');
+            document.getElementById("kitchen-ingredient-volume-value").classList.remove('border-red-500');
+            document.getElementById("kitchen-ingredient-unit").classList.remove('border-red-500');
+        }
+
+        function addOrUpdateIngredient(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const nameInput = document.getElementById("kitchen-ingredient-name");
+            const volumeInput = document.getElementById("kitchen-ingredient-volume-value");
+            const unitSelect = document.getElementById("kitchen-ingredient-unit");
+
+            const name = nameInput.value.trim();
+            const volume = volumeInput.value;
+            const unit = unitSelect.value;
+
+            // Basic client-side validation
+            let formIsValid = true;
+            if (!name) {
+                nameInput.classList.add('border-red-500');
+                formIsValid = false;
+            } else {
+                nameInput.classList.remove('border-red-500');
+            }
+            if (volume === "" || parseFloat(volume) < 0) {
+                volumeInput.classList.add('border-red-500');
+                formIsValid = false;
+            } else {
+                volumeInput.classList.remove('border-red-500');
+            }
+            if (!unit) {
+                unitSelect.classList.add('border-red-500');
+                formIsValid = false;
+            } else {
+                unitSelect.classList.remove('border-red-500');
+            }
+
+
+            if (!formIsValid) {
+                showMessage(kitchenMessageDiv, "Please fill in all fields correctly.", 'error');
+                return;
+            }
+
+
+            const data = {
+                ingredient: name,
+                volume: parseFloat(volume), // Ensure volume is a number
+                msh: unit
+            };
+
+            if (editingRow) {
+                const id = editingRow.dataset.id; // Get ID from the data attribute
+                postToServer("update", { id: parseInt(id), ...data }, kitchenMessageDiv, resetForm); // Pass resetForm as callback
+            } else {
+                postToServer("insert", data, kitchenMessageDiv, resetForm); // Pass resetForm as callback
+            }
+        }
+
+        function editIngredient(btn) {
+            if (editingRow) {
+                // Ensure no-filter rows are not attempting to have editing-row class removed
+                if (!editingRow.classList.contains('no-filter')) {
+                    editingRow.classList.remove('editing-row'); // Remove highlight from previously edited row
+                }
+            }
+
+            const row = btn.closest("tr");
+            row.classList.add('editing-row'); // Highlight the row being edited
+            editingRow = row;
+
+            // Populate the form fields with data from the selected row
+            document.getElementById("kitchen-ingredient-name").value = row.children[1].innerText; // Ingredient
+            document.getElementById("kitchen-ingredient-volume-value").value = row.children[2].innerText; // Volume
+            document.getElementById("kitchen-ingredient-unit").value = row.children[3].innerText; // Unit
+
+            kitchenFormTitle.innerText = "Edit Stock Item (ID: " + row.dataset.id + ")"; // Change title to indicate editing
+            saveKitchenIngredientBtn.innerText = "Update Kitchen Stock"; // Change button text
+            saveKitchenIngredientBtn.classList.remove('bg-orange-500', 'hover:bg-orange-600', 'focus:ring-orange-500');
+            saveKitchenIngredientBtn.classList.add('bg-orange-600', 'hover:bg-orange-600', 'focus:ring-orange-600');
+            cancelEditKitchenIngredientBtn.classList.remove('hidden'); // Show cancel button
+            // Clear any previous validation errors on form fields when editing
+            document.getElementById("kitchen-ingredient-name").classList.remove('border-red-500');
+            document.getElementById("kitchen-ingredient-volume-value").classList.remove('border-red-500');
+            document.getElementById("kitchen-ingredient-unit").classList.remove('border-red-500');
+        }
+
+        async function deleteIngredient(btn) {
+            const row = btn.closest("tr");
+            // Prevent deleting the "No items" or "Error" row by clicking its (non-existent) delete button
+            if (row.classList.contains('no-filter')) {
+                return;
+            }
+            const id = row.dataset.id; // Get ID from the data attribute
+            const ingredientName = row.children[1].innerText;
+
+            if (await showCustomConfirm(`Are you sure you want to delete "${ingredientName}"?`)) {
+                postToServer("delete", { id: parseInt(id) }, kitchenMessageDiv, resetForm); // Pass resetForm as callback
+            }
+            // No need to call resetForm here, it's called in the callback after successful deletion
+        }
+
+        cancelEditKitchenIngredientBtn.addEventListener('click', resetForm); // Add event listener to cancel button
+
+        // Table Search Functionality
+        function applyTableFilter() {
+            const filter = kitchenStockSearchInput.value.toLowerCase();
+            const rows = ingredientTableBody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                // If it's a "no-filter" row (like loading or empty message), always show it
+                if (row.classList.contains('no-filter')) {
+                    row.style.display = '';
+                    return; // Move to the next row
+                }
+
+                // Get text content from relevant columns (ID, Ingredient, Volume, Unit)
+                const idText = row.children[0] ? row.children[0].innerText.toLowerCase() : '';
+                const ingredientText = row.children[1] ? row.children[1].innerText.toLowerCase() : '';
+                const volumeText = row.children[2] ? row.children[2].innerText.toLowerCase() : '';
+                const unitText = row.children[3] ? row.children[3].innerText.toLowerCase() : '';
+
+                // Combine text from searchable columns
+                const rowText = `${idText} ${ingredientText} ${volumeText} ${unitText}`;
+
+
+                if (rowText.includes(filter)) {
+                    // Show the row if it matches the filter
+                    row.style.display = '';
+                } else {
+                    // Hide the row if it doesn't match
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Event listener for the search input
+        kitchenStockSearchInput.addEventListener('input', applyTableFilter);
+
+
+        // Recipe related functions
+        async function addRecipeIngredientField(ingredient = { name: '', quantity: '', unit: '' }) {
+            const ingredientRow = document.createElement('div');
+            ingredientRow.classList.add('flex', 'items-center', 'gap-2', 'recipe-ingredient-row');
+
+            // Fetch ingredients from the 'kitchen' table
+            let ingredients = [];
+            let maxQuantity = 0;
+            try {
+                const res = await fetch('http://127.0.0.1:8000/get_kitchen_ingredients.php');  // Your PHP endpoint
+                ingredients = await res.json();
+            } catch (error) {
+                console.error('Error fetching ingredients:', error);
+            }
+
+            // Get maximum quantity and unit from the kitchen table data
+            const ingredientOptions = ingredients.map(ingredientData => {
+                if (ingredientData.name === ingredient.name) {
+                    maxQuantity = ingredientData.quantity;  // Set the max quantity based on kitchen data
+                }
+                return `<option value="${ingredientData.id}" ${ingredient.name === ingredientData.name ? 'selected' : ''}>${ingredientData.name}</option>`;
+            }).join('');
+
+            ingredientRow.innerHTML = `
+        <!-- Ingredient selection dropdown -->
+        <select  class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:border-orange-500 focus:outline-orange ingredient-name" id="ingredient-name">
+            <option value="">Select Ingredient</option>
+            ${ingredientOptions}
+        </select>
+        
+        <!-- Quantity input (editable but restricted to max available stock) -->
+        <input type="number" placeholder="Qty" value="${ingredient.quantity || 0}"
+            class="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm focus:border-orange-500 focus:outline-orange" 
+            min="0" step="0.01" max="${maxQuantity}" id="ingredient-quantity" ${ingredient.quantity ? '' : ''}>
+        
+        <!-- Unit dropdown -->
+        <select  disabled class="w-24 px-3 py-2 border border-gray-300 rounded-md text-sm focus:border-orange-500 focus:outline-orange ingredient-unit" id="ingredient-unit">
+            <option value="">Unit</option>
+            <option value="kg" ${ingredient.unit === 'kg' ? 'selected' : ''}>kg</option>
+            <option value="g" ${ingredient.unit === 'g' ? 'selected' : ''}>g</option>
+            <option value="L" ${ingredient.unit === 'L' ? 'selected' : ''}>L</option>
+            <option value="ml" ${ingredient.unit === 'ml' ? 'selected' : ''}>ml</option>
+            <option value="quantity" ${ingredient.unit === 'quantity' ? 'selected' : ''}>Qty</option>
+            <option value="cups" ${ingredient.unit === 'cups' ? 'selected' : ''}>Cups</option>
+            <option value="pieces" ${ingredient.unit === 'pieces' ? 'selected' : ''}>Pcs</option>
+            <option value="tbsp" ${ingredient.unit === 'tbsp' ? 'selected' : ''}>Tbsp</option>
+            <option value="tsp" ${ingredient.unit === 'tsp' ? 'selected' : ''}>Tsp</option>
+            <option value="pinch" ${ingredient.unit === 'pinch' ? 'selected' : ''}>Pinch</option>
+        </select>
+        
+        <!-- Remove button -->
+        <button type="button" class="btn-remove px-2 py-1 bg-red-600 text-white font-medium rounded-md transition duration-200 ease-in-out hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 text-xs leading-none inline-flex items-center justify-center">X</button>
+    `;
+
+            recipeIngredientsContainer.appendChild(ingredientRow);
+
+            // Add event listener to the new remove button
+            ingredientRow.querySelector('.btn-remove').addEventListener('click', function () {
+                ingredientRow.remove();
+            });
+
+            // Listen for changes to the ingredient selection and update quantity/unit fields
+            const ingredientSelect = ingredientRow.querySelector('#ingredient-name');
+            ingredientSelect.addEventListener('change', function () {
+                const selectedIngredient = ingredients.find(ing => ing.id == ingredientSelect.value);
+                if (selectedIngredient) {
+                    // Update max quantity and unit based on selection
+                    maxQuantity = selectedIngredient.quantity;
+                    ingredientRow.querySelector('#ingredient-quantity').max = maxQuantity;
+                    ingredientRow.querySelector('#ingredient-unit').value = selectedIngredient.unit;
+                }
+            });
+
+            // Prevent quantity input from exceeding max quantity
+            const quantityInput = ingredientRow.querySelector('#ingredient-quantity');
+            quantityInput.addEventListener('input', function () {
+                if (parseFloat(quantityInput.value) > maxQuantity) {
+                    quantityInput.value = maxQuantity; // Ensure it doesn't exceed the max available quantity
+                }
+            });
+        }
+        document.getElementById('product-select').addEventListener('change', async function () {
+            const productId = this.value;
+            if (!productId) return;
+
+            try {
+                const res = await fetch(`http://127.0.0.1:8000/get_recipe_ingredients.php?product_id=${productId}`);
+                const ingredients = await res.json();
+
+                // Clear previous ingredients
+                recipeIngredientsContainer.innerHTML = '';
+
+                // Add each ingredient from the recipe
+                for (const ingredient of ingredients) {
+                    await addRecipeIngredientField(ingredient);
+                }
+            } catch (error) {
+                console.error('Failed to load recipe ingredients:', error);
+            }
+        });
+
+        document.querySelector('#save-recipe-btn').addEventListener('click', async function () {
+            // FIX: Removed the '#' prefix from the ID
+            const productId = document.getElementById('product-select').value; // get from hidden field or elsewhere
+            const ingredientRows = document.querySelectorAll('.recipe-ingredient-row');
+
+            const recipeIngredients = [];
+
+            ingredientRows.forEach(row => {
+                var ingredientId = row.querySelector('#ingredient-name').value;
+                var unit = row.querySelector('#ingredient-unit').value;
+                var quantity = row.querySelector('#ingredient-quantity').value;
+                var select = row.querySelector('#ingredient-name');
+                var name = select.options[select.selectedIndex].text;
+
+                if (ingredientId && quantity > 0) {
+                    recipeIngredients.push({
+                        ingredient_id: ingredientId,
+                        quantity: quantity,
+                        name: name,
+                        unit: unit
+                    });
+                }
+            });
+
+            // Send to PHP backend
+            try {
+                const response = await fetch('http://127.0.0.1:8000/add_recipe_ingredients.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        ingredients: recipeIngredients
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // showMessage('Recipe saved successfully!');
+                } else {
+                    // showMessage('Failed to save recipe: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error submitting recipe:', error);
+            }
+        });
+
+
+        function saveRecipe() {
+            const selectedProductId = productSelect.value;
+            const selectedProductName = productSelect.options[productSelect.selectedIndex].text;
+
+            if (!selectedProductId) {
+                showMessage(recipeMessageDiv, 'Please select a food item for the recipe.', 'error');
+                return;
+            }
+
+            const recipeIngredients = [];
+            let allIngredientsValid = true;
+            recipeIngredientsContainer.querySelectorAll('.recipe-ingredient-row').forEach(row => {
+                const nameInput = row.children[0];
+                const quantityInput = row.children[1];
+                const unitSelect = row.children[2];
+
+                const name = nameInput.value.trim();
+                const quantity = quantityInput.value;
+                const unit = unitSelect.value;
+
+                // Basic validation for recipe ingredients
+                if (!name) {
+                    nameInput.classList.add('border-red-500');
+                    allIngredientsValid = false;
+                } else {
+                    nameInput.classList.remove('border-red-500');
+                }
+                if (quantity === "" || parseFloat(quantity) < 0) {
+                    quantityInput.classList.add('border-red-500');
+                    allIngredientsValid = false;
+                } else {
+                    quantityInput.classList.remove('border-red-500');
+                }
+                if (!unit) {
+                    unitSelect.classList.add('border-red-500');
+                    allIngredientsValid = false;
+                } else {
+                    unitSelect.classList.remove('border-red-500');
+                }
+
+
+                if (name && quantity !== "" && unit && parseFloat(quantity) >= 0) {
+                    recipeIngredients.push({ name, quantity: parseFloat(quantity), unit });
+                }
+            });
+
+            if (!allIngredientsValid) {
+                showMessage(recipeMessageDiv, 'Please fill in all recipe ingredient fields correctly.', 'error');
+                return;
+            }
+
+
+            if (recipeIngredients.length === 0) {
+                showMessage(recipeMessageDiv, 'Please add at least one ingredient to the recipe.', 'error');
+                return;
+            }
+
+            // Here you would send the recipe data to your backend
+            const recipeData = {
+                productId: parseInt(selectedProductId),
+                productName: selectedProductName, // Include product name for easier handling/display
+                ingredients: recipeIngredients
+            };
+
+            // console.log("Saving recipe:", recipeData); // Placeholder for sending to backend
+
+            // Simulate backend call to save recipe
+            showMessage(recipeMessageDiv, 'Saving recipe...', 'info');
+            // Replace with actual fetch call to your backend endpoint for saving recipes
+
+
+            setTimeout(() => { // Simulate network delay
+                showMessage(recipeMessageDiv, 'Recipe saved successfully!', 'success');
+                // Clear recipe form
+                productSelect.value = "";
+                recipeIngredientsContainer.innerHTML = "";
+
+                loadSavedRecipes(); // Reload recipes after saving
+            }, 500); // Simulate 0.5 second save time
+
+        }
+
+
+        async function loadProducts() {
+            productSelect.innerHTML = '<option value="">Loading products...</option>';
+
+            try {
+                const res = await fetch('http://127.0.0.1:8000/get_product.php');
+                const products = await res.json();
+
+                productSelect.innerHTML = '<option value=""  selected disabled>Select Food Item</option>';
+                products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = product.title;
+                    productSelect.appendChild(option);
+                });
+            } catch (err) {
+                productSelect.innerHTML = '<option value="">Error loading products</option>';
+                console.error("Error loading products:", err);
+            }
+        }
+
+
+        async function loadSavedRecipes() {
+            savedRecipesContainer.innerHTML = '<p class="text-gray-500 col-span-full">Loading your recipes...</p>'; // Show loading
+            savedRecipesMessageDiv.classList.add('hidden'); // Hide previous messages
+
+            try {
+                // Simulate fetching saved recipes from local storage
+                const recipes = JSON.parse(localStorage.getItem('savedRecipes')) || [];
+
+                savedRecipesContainer.innerHTML = ''; // Clear loading
+
+                if (recipes.length === 0) {
+                    savedRecipesContainer.innerHTML = '<p class="text-gray-500 col-span-full">No saved recipes yet.</p>';
+                } else {
+                    recipes.forEach(recipe => {
+                        const recipeCard = document.createElement('div');
+                        recipeCard.classList.add('bg-white', 'border', 'border-gray-200', 'p-4', 'rounded-lg', 'shadow-sm');
+                        recipeCard.innerHTML = `
+                             <h3 class="text-xl font-semibold mb-3 text-gray-800">${recipe.productName}</h3>
+                             <p class="text-sm text-gray-700 mb-2 font-medium">Ingredients needed:</p>
+                             <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                                 ${recipe.ingredients.map(ing => `<li>${ing.name} - <span class="font-semibold">${ing.quantity} ${ing.unit}</span></li>`).join('')}
+                             </ul>
+                             <button type="button" onclick="removeRecipe(${recipe.id})"
+                                 class="mt-4 px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 text-xs font-medium">Remove
+                                 Recipe</button>
+                         `;
+                        savedRecipesContainer.appendChild(recipeCard);
+                    });
+                }
+            } catch (err) {
+                savedRecipesContainer.innerHTML = '<p class="col-span-full text-red-500">Error loading saved recipes.</p>';
+                savedRecipesMessageDiv.innerText = `Error loading saved recipes: ${err.message}`;
+                savedRecipesMessageDiv.classList.remove('hidden');
+                console.error("Error loading saved recipes:", err);
+            }
+        }
+
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadKitchenStockOverview(); // Load overview on page load
+            loadTable(); // Load table on page load
+            loadProducts(); // Load products for recipe selection
+            loadSavedRecipes(); // Load saved recipes
+
+            document.getElementById("kitchen-ingredient-form").addEventListener("submit", addOrUpdateIngredient);
+            document.getElementById('add-recipe-ingredient-btn').addEventListener('click', () => addRecipeIngredientField()); // Add empty field
+            document.getElementById('save-recipe-btn').addEventListener('click', saveRecipe);
+
+
+            // Make delete, edit, removeRecipe globally accessible (since they are in inline onclick)
+            window.editIngredient = editIngredient;
+            window.deleteIngredient = deleteIngredient;
+            window.removeRecipe = removeRecipe; // Expose removeRecipe globally
+        });
+        async function showCustomConfirm(message) {
+            const alertDialog = document.getElementById('custom-alert');
+            const alertTitle = document.getElementById('alert-title');
+            const confirmBtn = document.getElementById('alert-confirm');
+            const cancelBtn = document.getElementById('alert-cancel');
+
+            alertTitle.textContent = message;
+            alertDialog.classList.remove('hidden');
+
+            return new Promise((resolve) => {
+                confirmBtn.onclick = () => {
+                    alertDialog.classList.add('hidden');
+                    resolve(true);
+                };
+                cancelBtn.onclick = () => {
+                    alertDialog.classList.add('hidden');
+                    resolve(false);
+                };
+            });
+        }
+    </script>
+    <!-- Custom Alert Dialog -->
+    <div id="custom-alert"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm bg-blur-md ">
+            <div class="p-6">
+                <h3 class="text-center text-lg font-semibold mb-2">Alert!</h3>
+                <p id="alert-title" class="text-md text-center  text-gray-900 mb-4"></p>
+                <div class="flex justify-center space-x-3 mt-2">
+                    <button id="alert-cancel"
+                        class="px-4 py-2 mr-4 text-gray-700 bg-gray-500 rounded-md text-white hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        Cancel
+                    </button>
+                    <button id="alert-confirm"
+                        class="px-4 py-2 mp-4 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

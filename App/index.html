@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper Selo</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <script src="js/script.js"></script>
+    <style>
+        :root {
+            --primary-color: #ef6800;
+            --primary-light: #ef6800;
+            --background-dark: #0f172a;
+            --background-light: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --success-color: #10b981;
+            --border-radius: 8px;
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-dark);
+            color: var(--text-primary);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loading-container {
+            text-align: center;
+            position: relative;
+            max-width: 480px;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: fadeIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            opacity: 0;
+        }
+
+        .loading-bar-container {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 2rem 0 1.5rem;
+            overflow: hidden;
+            position: relative;
+            animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
+            opacity: 0;
+        }
+
+        .loading-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+            border-radius: 3px;
+            transition: width 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+            /* Reduced transition for smoother look */
+        }
+
+        .progress-indicator {
+            position: absolute;
+            right: 0;
+            top: -30px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            animation: fadeIn 0.5s ease 0.6s forwards;
+            opacity: 0;
+        }
+
+        .loading-text-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out 0.8s forwards;
+        }
+
+        .loading-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            transition: opacity 0.2s ease-in-out;
+            /* Smoother text transition */
+        }
+
+        .loading-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: var(--primary-light);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            opacity: 0;
+            animation-delay: 0.8s;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .branding {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.3);
+            animation: fadeIn 0.6s ease-out 1.2s forwards;
+            opacity: 0;
+            padding: 0 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .loading-container {
+                padding: 1.5rem;
+            }
+
+            .logo {
+                font-size: 2rem;
+            }
+
+            .branding {
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loading-container">
+        <h1 class="logo">Hyper Selo</h1>
+
+        <div class="loading-bar-container">
+            <div class="progress-indicator"><span id="progress-percentage">0%</span></div>
+            <div class="loading-bar"></div>
+        </div>
+
+        <div class="loading-text-container">
+            <span class="loading-spinner"></span>
+            <p class="loading-text" id="loading-message">Initializing application components...</p>
+        </div>
+    </div>
+
+    <div class="branding text-white">
+        Created By Jepsoft™ © 2025 | Version 1.0
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingBar = document.querySelector('.loading-bar');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            const loadingMessageElement = document.getElementById('loading-message');
+            const messages = [
+                "Initializing application components...",
+                "Loading core modules...",
+                "Initializing database...",
+                "Preparing user interface...",
+                "Finalizing setup..."
+            ];
+
+            let currentProgress = 0;
+            const totalSteps = messages.length;
+            const progressIncrement = 100 / totalSteps;
+            const messageIntervalDuration = 1500; 
+            const totalLoadingTime = messageIntervalDuration * totalSteps;
+            const progressBarUpdateInterval = 100;
+
+            let messageIndex = 0;
+
+            const updateProgressBar = () => {
+                progressUpdateTime += progressBarUpdateInterval;
+                const targetProgress = (progressUpdateTime / totalLoadingTime) * 100;
+                currentProgress = Math.min(targetProgress, 100); 
+
+                loadingBar.style.width = `${currentProgress}%`;
+                progressPercentage.textContent = `${Math.round(currentProgress)}%`;
+
+                if (currentProgress < 100) {
+                    setTimeout(updateProgressBar, progressBarUpdateInterval);
+                }
+            };
+
+            const updateMessage = () => {
+                loadingMessageElement.style.opacity = 0; 
+                setTimeout(() => {
+                    loadingMessageElement.textContent = messages[messageIndex];
+                    loadingMessageElement.style.opacity = 1; 
+                    messageIndex++;
+
+                    if (messageIndex < messages.length) {
+                        setTimeout(updateMessage, messageIntervalDuration); 
+                    } else {
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 800);
+                    }
+                }, 200);
+            };
+            setTimeout(() => {
+                loadingSpinner.style.opacity = '1';
+                updateMessage();
+                updateProgressBar();
+            }, 800);
+        });
+    </script>
+</body>
+
+</html>

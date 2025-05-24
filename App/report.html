@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Report Dashboard</title>
+    <link href="css/tailwind.css" rel="stylesheet">
+    <script src="js/telwind.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/luxon.js"></script>
+</head>
+<style>
+    .modal {
+        display: none;
+        /* Hidden by default */
+        position: fixed;
+        /* Stay in place */
+        z-index: 1;
+        /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%;
+        /* Full width */
+        height: 100%;
+        /* Full height */
+        overflow: auto;
+        /* Enable scroll if needed */
+        background-color: rgba(0, 0, 0, 0.4);
+        /* Black w/ opacity */
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 25% auto;
+        /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 20%;
+        /* Could be more or less, depending on screen size */
+        border-radius: 15px;
+    }
+
+    .buttons {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+
+    .buttons button {
+        padding: 10px 20px;
+        margin-left: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    #yesButton {
+        background-color: rgb(255, 123, 0);
+        color: white;
+        font-weight: bold;
+    }
+
+    #noButton {
+        background-color: rgb(150, 150, 150);
+        color: white;
+        font-weight: bold;
+    }
+</style>
+
+<body class="bg-gray-50 min-h-screen">
+    <div class="flex flex-col h-screen">
+        <header class="bg-white shadow-sm py-4 px-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2 md:mb-0">Sales Dashboard</h1>
+                <form id="filterForm" class="flex flex-wrap gap-3 items-end">
+                    <div class="flex items-center gap-2 hidden">
+                        <label for="range" class="text-sm font-medium text-gray-700">Date Range:</label>
+                        <select id="range" name="range" disabled
+                            class="px-3 py-2 border rounded-md text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="" selected>Custom</option>
+                            <option value="last_7_days">Last 7 Days</option>
+                            <option value="this_month">This Month</option>
+                            <option value="last_6_months">Last 6 Months</option>
+                            <option value="last_4_years">Last 4 Years</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="from" class="text-sm font-medium text-gray-700">From:</label>
+                        <input type="date" id="from" name="from"
+                            class="px-3 py-2 border rounded-md text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="to" class="text-sm font-medium text-gray-700">To:</label>
+                        <input type="date" id="to" name="to"
+                            class="px-3 py-2 border rounded-md text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <button type="submit"
+                        class="bg-orange-600 z-10 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium ">
+                        View Sales
+                    </button>
+                    <button type="button" id="downloadReportBtn"
+                        class="bg-green-600 z-10 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        Download Report
+                    </button>
+                </form>
+            </div>
+        </header>
+        <main class="flex-1 overflow-auto p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Total Sales</p>
+                            <p class="text-2xl font-bold text-gray-900 mt-1" id="totalSales">...</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Cash Withdraw</p>
+                            <p class="text-2xl font-bold text-gray-900 mt-1" id="totalProfit">...</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v8m0 0l-4-4m4 4l4-4M4 6h16M4 6v12h16V6H4z" />
+                            </svg>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Total Orders</p>
+                            <p class="text-2xl font-bold text-gray-900 mt-1" id="orderCount">...</p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Cashier Balance</p>
+                            <p class="text-2xl font-bold text-gray-900 mt-1" id="cashierBalance">...</p>
+                        </div>
+                        <div class="bg-yellow-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-6">
+
+                <div class="bg-white p-4 rounded-lg shadow-sm overflow-x-auto">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Sales Trend</h3>
+                    <div class="h-80">
+                        <canvas id="salesTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-sm overflow-x-auto">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Order Volume</h3>
+                    <div class="h-80">
+                        <canvas id="orderCountChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="customConfirmation" class="modal">
+        <div class="modal-content">
+            <p class="text-center font-bold">Do you want to print today's report?</p>
+            <div class="buttons flex justify-between ml-[25%] mr-[25%]">
+                <button id="yesButton">Yes</button>
+                <button id="noButton">No</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const customConfirmation = document.getElementById('customConfirmation');
+        const yesButton = document.getElementById('yesButton');
+        const downloadReportBtn = document.getElementById('downloadReportBtn');
+        const noButton = document.getElementById('noButton');
+        async function downalodrepor() {
+            try {
+                const response = await fetch(``);
+                if (response.ok) {
+                }
+            } catch (error) {
+            }
+        }
+        function showConfirmation() {
+            customConfirmation.style.display = 'block';
+        }
+        downloadReportBtn.addEventListener('click', () => {
+            downloadReport();
+        });
+        function hideConfirmation() {
+            customConfirmation.style.display = 'none';
+        }
+
+        // You'll need to adapt this part to integrate with your print_report() function
+        yesButton.addEventListener('click', () => {
+            hideConfirmation();
+            // Call your print_report() function here
+            printReportFromCustomAlert();
+        });
+
+        noButton.addEventListener('click', () => {
+            hideConfirmation();
+        });
+
+        // Placeholder for your async print_report() function
+        async function printReportFromCustomAlert() {
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/print_report.php`);
+                if (response.ok) {
+                }
+            } catch (error) {
+            }
+        }
+        async function downloadReport() {
+            const from = fromInput.value;
+            const to = toInput.value;
+            const range = rangeSelect.value;
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/generate_report.php?from=${from}&to=${to}&range=${range}`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Sales_Report_${from}_to_${to}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    console.error('Failed to generate report');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        const DateTime = luxon.DateTime;
+        const filterForm = document.getElementById('filterForm');
+        const rangeSelect = document.getElementById('range');
+        const fromInput = document.getElementById('from');
+        const toInput = document.getElementById('to');
+        let salesTrendChart, orderCountChart, profitTrendChart;
+
+        // Initialize default dates
+        const today = DateTime.now().toISODate();
+        const firstOfMonth = DateTime.now().startOf('month').toISODate();
+        fromInput.value = firstOfMonth;
+        toInput.value = today;
+
+        function formatCurrency(amount) {
+            if (!amount || isNaN(amount)) return '0.00';
+            return parseFloat(amount).toLocaleString('en-LK', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // Chart configuration
+        const chartConfig = {
+            sales: {
+                type: 'line',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            title: { display: true, text: 'Date' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Amount (Rs)' },
+                            grid: { color: '#f3f4f6' }
+                        }
+                    }
+                }
+            },
+            orders: {
+                type: 'bar',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            title: { display: true, text: 'Date' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Orders' },
+                            grid: { color: '#f3f4f6' }
+                        }
+                    }
+                }
+            },
+            profit: {
+                type: 'line',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            title: { display: true, text: 'Date' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Profit (Rs)' },
+                            grid: { color: '#f3f4f6' }
+                        }
+                    }
+                }
+            }
+        };
+
+        async function fetchData() {
+            const from = fromInput.value;
+            const to = toInput.value;
+            const range = rangeSelect.value;
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/report.php?from=${from}&to=${to}&range=${range}`);
+                const data = await response.json();
+
+                updateMetrics(data);
+                updateCharts(data);
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showError('Failed to load data');
+            }
+        }
+
+        function updateMetrics(data) {
+            document.getElementById('totalSales').textContent = `Rs ${(data.totalSales)}`;
+            document.getElementById('totalProfit').textContent = `Rs ${(data.totalProfit)}`;
+            document.getElementById('orderCount').textContent = data.orderCount;
+            document.getElementById('cashierBalance').textContent = `Rs ${(data.cashierBalance)}`;
+        }
+
+        function updateCharts(data) {
+            // Destroy existing charts
+            if (salesTrendChart) salesTrendChart.destroy();
+            if (orderCountChart) orderCountChart.destroy();
+            if (profitTrendChart) profitTrendChart.destroy();
+
+            // Profit Trend Chart
+            profitTrendChart = new Chart(
+                document.getElementById('profitTrendChart'),
+                {
+                    ...chartConfig.profit,
+                    data: {
+                        labels: data.profitDates,
+                        datasets: [{
+                            label: 'Profit',
+                            data: data.profitAmounts,
+                            borderColor: '#16a34a',
+                            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            fill: true
+                        }]
+                    }
+                }
+            );
+
+            // Sales Trend Chart
+            salesTrendChart = new Chart(
+                document.getElementById('salesTrendChart'),
+                {
+                    ...chartConfig.sales,
+                    data: {
+                        labels: data.dates,
+                        datasets: [{
+                            label: 'Sales Amount',
+                            data: data.salesAmounts,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            fill: true
+                        }]
+                    }
+                }
+            );
+
+            // Order Count Chart
+            orderCountChart = new Chart(
+                document.getElementById('orderCountChart'),
+                {
+                    ...chartConfig.orders,
+                    data: {
+                        labels: data.dates,
+                        datasets: [{
+                            label: 'Orders',
+                            data: data.dailyOrderCounts,
+                            backgroundColor: '#f59e0b',
+                            borderColor: '#f59e0b',
+                            borderWidth: 1,
+                             maxBarThickness: 30 
+                        }]
+                    }
+                }
+            );
+        }
+
+        function showError(message) {
+            // Implement error notification UI (e.g., a temporary message on the screen)
+            console.error(message);
+        }
+
+        // Event Listeners
+        filterForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            fetchData();
+        });
+
+        rangeSelect.addEventListener('change', () => {
+            if (rangeSelect.value) {
+                fromInput.disabled = true;
+                toInput.disabled = true;
+            } else {
+                fromInput.disabled = false;
+                toInput.disabled = false;
+            }
+        });
+
+        // Initial load
+        fetchData();
+    </script>
+</body>
+
+</html>

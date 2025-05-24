@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction and Order History</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <script src="js/telwind.js"></script>
+   <link rel="stylesheet" href="css/flat_picker.css">
+    <style>
+        :root {
+            --primary-color: #f97316; /* Orange-500 like */
+            --primary-hover-color: #ea580c;
+            --border-color: #e5e7eb; /* Cool Gray 200 */
+            --background-color: #f9fafb; /* Cool Gray 50 */
+            --card-background-color: #ffffff;
+            --text-color: #374151; /* Cool Gray 700 */
+            --text-light-color: #6b7280; /* Cool Gray 500 */
+            --header-bg-color: #f3f4f6; /* Cool Gray 100 */
+            --green-accent: #10b981; /* Green 500 */
+            --navy-accent: #3b5998; /* A nice navy blue */
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--background-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Make body take full viewport height */
+            overflow: hidden; /* Prevent body from scrolling */
+            margin: 0;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .section-container {
+            flex: 1; /* Distribute available space equally */
+            margin: 10px;
+            background-color: var(--card-background-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* Essential for flex children to shrink correctly */
+        }
+
+        .section-container:last-child {
+            margin-bottom: 10px; /* Consistent margin */
+        }
+
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px; /* Reduced margin as table wrapper will have its own */
+            gap: 15px;
+            flex-shrink: 0; /* Prevent filter from shrinking */
+        }
+
+        .filter-container h2 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.7em; /* Slightly adjusted */
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-container label {
+            margin-right: 5px;
+            font-weight: 500;
+            color: var(--text-light-color);
+        }
+
+        #transactionType, #transactionDate, #orderItemDate {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95em;
+            background-color: #fff;
+            transition: border-color 0.3s ease;
+        }
+
+        #transactionType:focus, #transactionDate:focus, #orderItemDate:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+        }
+
+        .table-scroll-wrapper {
+            flex-grow: 1; /* Allows the table wrapper to take available vertical space */
+            overflow-y: auto; /* Makes this part scrollable */
+            min-height: 0; /* Crucial for flex item to shrink and allow scrolling */
+            margin-top: 5px; /* Space between filter and table */
+            margin-bottom: 15px; /* Space below table */
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            /* margin-top removed as wrapper handles spacing */
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: var(--header-bg-color);
+            font-weight: 600;
+            padding: 15px;
+            color: var(--text-color);
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.05em;
+            position: sticky; /* Make table headers sticky */
+            top: 0; /* Stick to the top of the scrollable container (.table-scroll-wrapper) */
+            z-index: 1;
+        }
+.max-w-180px {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+        tr:nth-child(even) {
+            background-color: #fdfdfe;
+        }
+
+        tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        .numeric-cell {
+            text-align: right;
+        }
+
+        .message-cell {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light-color);
+            font-style: italic;
+        }
+
+        #transactionSummary {
+            margin-top: 0px; /* Adjusted as table wrapper provides bottom margin */
+            padding: 15px 20px; /* Slightly reduced padding */
+            border: 1px solid var(--border-color);
+            background-color: var(--header-bg-color);
+            border-radius: 8px;
+            display: flex;
+            justify-content: flex-start;
+            gap: 50px; /* Adjusted gap */
+            font-size: 1.05em; /* Adjusted font size */
+            flex-shrink: 0; /* Prevent summary from shrinking */
+        }
+
+        #transactionSummary > div {
+            font-weight: 500;
+        }
+
+        .total-count {
+            color: var(--navy-accent);
+            font-weight: bold;
+        }
+
+        .total-price {
+            color: var(--green-accent);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                height: auto; /* Allow body to scroll on small screens if content overflows */
+                min-height: 100vh;
+                overflow: auto;
+            }
+            .section-container {
+                min-height: auto; /* Allow sections to grow as needed */
+                margin: 10px 5px;
+                padding: 15px;
+            }
+            .table-scroll-wrapper {
+                max-height: 300px; /* Example max height for tables on mobile */
+            }
+            .filter-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+            #transactionType, #transactionDate, #orderItemDate {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+            #transactionSummary {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="section-container">
+        <div class="filter-container">
+            <h2>Expense & Withdrawals</h2>
+            <div class="filter-group">
+                <label for="transactionType">Type:</label>
+                <select id="transactionType">
+                    <option value="">All Types</option>
+                    <option value="cash withdraw">Cash Withdraw</option>
+                    <option value="expense">Expense</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="transactionDate">Date:</label>
+                <input type="text" id="transactionDate" placeholder="Select Date">
+            </div>
+        </div>
+        <div class="table-scroll-wrapper">
+            <table id="transactionsTable">
+                <thead class="border-2 border">
+                    <tr>
+                        <th style="font-weight: bold;">Reason</th>
+                        <th style="font-weight: bold;">Type</th>
+                        <th style="font-weight: bold;">Date</th>
+                        <th style="font-weight: bold;">Other Notes</th>
+                        <th class="numeric-cell font-bold">Price (LKR)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
+        <div id="transactionSummary" style="display: flex;justify-content:space-between;">
+            <div class="total-count">Total Transactions: 0</div>
+            <div class="total-price">Total Price: LKR 0.00</div>
+        </div>
+    </div>
+
+    <div class="section-container" id="orderItemsContainer">
+        <div class="filter-container">
+            <h2>Order Items</h2>
+            <div class="filter-group">
+                <label for="orderItemDate">Date:</label>
+                <input type="text" id="orderItemDate" placeholder="Select Date">
+            </div>
+        </div>
+        <div class="table-scroll-wrapper">
+            <table  id="orderItemsTable">
+                <thead class="border-2 border">
+                    <tr>
+                        <th class="font-bold ">Product Name</th>
+                        <th class="numeric-cell font-bold">Quantity</th>
+                        <th class="font-bold text-right">Date</th>
+                        <th class="numeric-cell font-bold">Price (LKR)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/flat-pikder.js"></script>  
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+
+        function getTodayDateString() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        const todayDateStr = getTodayDateString();
+
+        flatpickr("#transactionDate", {
+            dateFormat: "Y-m-d",
+            defaultDate: todayDateStr,
+            onChange: function(selectedDates, dateStr, instance) {
+                fetchTransactions(document.getElementById('transactionType').value, dateStr);
+            }
+        });
+
+        flatpickr("#orderItemDate", {
+            dateFormat: "Y-m-d",
+            defaultDate: todayDateStr,
+            onChange: function(selectedDates, dateStr, instance) {
+                fetchOrderItems(dateStr);
+            }
+        });
+
+        document.getElementById('transactionType').addEventListener('change', function() {
+            fetchTransactions(this.value, document.getElementById('transactionDate').value);
+        });
+
+        function formatPrice(price) {
+             const numPrice = parseFloat(price);
+            if (isNaN(numPrice)) {
+                return '0.00'; // Or handle as an error/empty string
+            }
+            return numPrice.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        
+        function updateTransactionSummaryDisplay(transactionsCount, totalTransactionPrice) {
+            const transactionSummaryDiv = document.getElementById('transactionSummary');
+            const formattedTotalPrice = totalTransactionPrice.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            transactionSummaryDiv.innerHTML = `
+                <div class="total-count">Total Transactions: ${transactionsCount}</div>
+                <div class="total-price">Total Price: LKR ${formattedTotalPrice}</div>
+            `;
+        }
+
+        function fetchTransactions(type = '', date = '') {
+            const tableBody = document.getElementById('transactionsTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '<tr><td colspan="5" class="message-cell">Loading transactions...</td></tr>';
+            updateTransactionSummaryDisplay(0, 0);
+
+            // Ensure date is provided, default to today if empty after initial load logic
+            const queryDate = date || todayDateStr;
+
+
+            fetch(`${API_BASE_URL}/get_transactions.php?type=${encodeURIComponent(type)}&date=${encodeURIComponent(queryDate)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    tableBody.innerHTML = '';
+                    if (!data || data.length === 0) {
+                        tableBody.innerHTML = '<tr><td colspan="5" class="message-cell">No transactions found for the selected criteria.</td></tr>';
+                        updateTransactionSummaryDisplay(0, 0);
+                        return;
+                    }
+
+                    let totalPrice = 0;
+                    data.forEach(transaction => {
+                       let row = tableBody.insertRow();
+
+row.insertCell().textContent = transaction.reson || 'N/A';
+
+row.insertCell().textContent = transaction.type || 'N/A';
+
+row.insertCell().textContent = transaction.date || 'N/A';
+let notesCell = row.insertCell();
+notesCell.textContent = transaction.other_notes || 'N/A';
+notesCell.classList.add('max-w-180px'); // Add your class here
+
+
+let priceCell = row.insertCell();
+priceCell.textContent = formatPrice(transaction.price);
+priceCell.classList.add('numeric-cell');
+
+
+                        totalPrice += parseFloat(transaction.price) || 0;
+                    });
+                    updateTransactionSummaryDisplay(data.length, totalPrice);
+                })
+                .catch(error => {
+                    console.error('Error fetching transactions:', error);
+                    tableBody.innerHTML = '<tr><td colspan="5" class="message-cell">Error loading transactions. Please try again.</td></tr>';
+                    updateTransactionSummaryDisplay(0, 0);
+                });
+        }
+
+        function fetchOrderItems(date = '') {
+            const tableBody = document.getElementById('orderItemsTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '<tr><td colspan="7" class="message-cell">Loading order items...</td></tr>';
+            
+            // Ensure date is provided, default to today if empty after initial load logic
+            const queryDate = date || todayDateStr;
+
+            fetch(`${API_BASE_URL}/get_order_itemss.php?date=${encodeURIComponent(queryDate)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    tableBody.innerHTML = '';
+                    if (!data || data.length === 0) {
+                        tableBody.innerHTML = '<tr><td colspan="7" class="message-cell">No order items found for the selected date.</td></tr>';
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        let row = tableBody.insertRow();
+                        row.insertCell().textContent = item.title || 'N/A';
+
+                        let qtyCell = row.insertCell();
+                        qtyCell.textContent = item.quantity || 0;
+                        qtyCell.classList.add('numeric-cell');
+                        let datess=row.insertCell();
+                        datess.classList.add('text-right')
+                        datess.textContent = item.date || 'N/A';
+                        
+                        let priceCell = row.insertCell();
+                        priceCell.textContent = formatPrice(item.price);
+                        priceCell.classList.add('numeric-cell');
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching order items:', error);
+                    tableBody.innerHTML = '<tr><td colspan="7" class="message-cell">Error loading order items. Please try again.</td></tr>';
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // The flatpickr instances are already set with defaultDate which populates the input.
+            // The initial fetch will use these values.
+            fetchTransactions(document.getElementById('transactionType').value, todayDateStr);
+            fetchOrderItems(todayDateStr);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper Selo</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/script.js"></script>
+</head>
+
+<body class="bg-gray-100 max-h-screen overflow-hidden">
+    <div class="flex h-screen">
+        <aside id="sidebar"
+            class="bg-white text-white sidebar-expanded flex flex-col h-full fixed transition-all duration-100">
+            <div class="p-4 bg-gray-100 flex items-center justify-between">
+                <div class="flex items-center sidebar-text">
+                    <img src="icons/icon.ico" class="rounded-full w-8 h-8" />
+                    <h1 class="ml-3 text-lg text-black">Hyper Selo</h1>
+                </div>
+                <h1 id="toggleSidebar"
+                    class="text-black border-none cursor-pointer hover:text-orange-500 hover:duration-100 duration-100 -mt-2 p-2 text-2xl">
+                    ☰</h1>
+            </div>
+            <nav class="flex-1 bg-gray-100">
+                <div class="flex justify-between h-screen">
+                    <ul class="w-full">
+                        <li id="home" class="menu-item flex items-center max-w-[147%] p-4 text-black rounded-lg m-2 hover:text-white hover:bg-orange-500 cursor-pointer transition-all duration-100"
+                            onclick="setActive(this, 'home.html')">
+                            <img src="icons/home.png" data-default="icons/home.png" data-hover="icons/home-hover.png"
+                                class="menu-icon w-6 h-6">
+                            <p class="ml-3 sidebar-text">Home</p>
+                        </li>
+                        <li class="menu-item flex items-center max-w-[147%] p-4 text-black rounded-lg m-2 hover:text-white hover:bg-orange-500 cursor-pointer transition-all duration-100"
+                            onclick="setActive(this, 'loaditems.html')">
+                            <img src="icons/dashboard.png" data-default="icons/dashboard.png"
+                                data-hover="icons/dashboard-hover.png" class="menu-icon w-6 h-6">
+                            <p class="ml-3 sidebar-text">Inventory</p>
+                        </li>
+                        <li class="menu-item flex items-center max-w-[147%] p-4 text-black rounded-lg m-2 hover:text-white hover:bg-orange-500 cursor-pointer transition-all duration-100"
+                            onclick="setActive(this, 'sales.html')">
+                            <img src="icons/sale-tag.png" data-default="icons/sale-tag.png"
+                                data-hover="icons/sale-tag-hover.png" class="menu-icon w-6 h-6">
+                            <p class="ml-3 sidebar-text">Payments</p>
+                        </li>
+                        <li class="menu-item flex items-center max-w-[147%] p-4 text-black rounded-lg m-2 hover:text-white hover:bg-orange-500 cursor-pointer transition-all duration-100"
+                            onclick="setActive(this, 'history.html')">
+                            <img src="icons/history.png" data-default="icons/history.png"
+                                data-hover="icons/history-hover.png" class="menu-icon w-6 h-6">
+                            <p class="ml-3 sidebar-text">Bill History</p>
+                        </li>
+                        <li class="menu-item flex items-center max-w-[147%] p-4 text-black rounded-lg m-2 hover:text-white hover:bg-orange-500 cursor-pointer transition-all duration-100"
+                            onclick="setActive(this, 'expencess.html')">
+                            <img src="icons/expensive.png" data-default="icons/expensive.png"
+                                data-hover="icons/expensive-hover.png" class="menu-icon w-6 h-6">
+                            <p class="ml-3 sidebar-text">Expenses</p>
+                        </li>
+                        <li class="menu-item flex items-center max-w-[147%] p-4 text-black rounded-lg m-2 hover:text-white hover:bg-orange-500 cursor-pointer transition-all duration-100"
+                            onclick="setActive(this, 'transactions.html')">
+                            <img src="icons/transactions.png" data-default="icons/transactions.png"
+                                data-hover="icons/transactions-hover.png" class="menu-icon w-6 h-6">
+                            <p class="ml-3 sidebar-text">Records</p>
+                        </li>
+                        <li class="menu-item flex items-center max-w-[147%] p-4 text-black rounded-lg m-2 hover:text-white hover:bg-orange-500 cursor-pointer transition-all duration-100"
+                            onclick="setActive(this, 'kitchen.html')">
+                            <img src="icons/chef.png" data-default="icons/chef.png" data-hover="icons/chef-hover.png"
+                                class="menu-icon w-6 h-6">
+                            <p class="ml-3 sidebar-text">kitchen</p>
+                        </li>
+                        <li class="menu-item flex items-center max-w-[147%] p-4 text-black rounded-lg m-2 hover:text-white hover:bg-orange-500 cursor-pointer transition-all duration-100"
+                            onclick="setActive(this, 'report.html')">
+                            <img src="icons/report.png" data-default="icons/report.png"
+                                data-hover="icons/report_hover.png" class="menu-icon w-6 h-6">
+                            <p class="ml-3 sidebar-text">Sales Dashboard</p>
+                        </li>
+                        <li class="menu-item flex items-center max-w-[147%] p-4 text-black rounded-lg m-2 hover:text-white hover:bg-orange-500 cursor-pointer transition-all duration-100"
+                            onclick="setActive(this, 'upload.html')">
+                            <img src="icons/upload.png" data-default="icons/upload.png"
+                                data-hover="icons/upload-hover.png" class="menu-icon w-6 h-6">
+                            <p class="ml-3 sidebar-text">Backup</p>
+                        </li>
+                    </ul>
+                    <div class="absolute right-0 bottom-0 left-0">
+                        <li class="menu-item flex items-center max-w-[147%] p-4 text-black rounded-lg m-2 hover:text-white hover:bg-orange-500 cursor-pointer transition-all duration-100"
+                            onclick="confirmLogout()">
+                            <img src="icons/logout.png" data-default="icons/logout.png"
+                                data-hover="icons/logout-hover.png" class="menu-icon w-6 h-6">
+                            <span class="ml-3 sidebar-text">Logout</span>
+                        </li>
+                        <p class="text-gray-600 text-[10px] text-center mb-2">Jepsoft Pos 1.0 | © 2025 Jepsoft™ </p>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        <div id="contentWrapper" class="flex flex-1 ml-64 transition-all duration-100 bg-white overflow-auto">
+            <iframe id="contentFrame" src="home.html" class="w-full h-full border-none"></iframe>
+        </div>
+        <div id="overlay" class="fixed inset-0 z-50 bg-black opacity-50 hidden"></div>
+
+        <!-- Custom Alert -->
+        <div id="customAlert" class="fixed inset-0 flex justify-center items-center z-50 hidden">
+            <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+                <div class="mb-4">
+                    <h2 class="text-xl font-semibold text-center">Alert</h2>
+                </div>
+                <div id="alertText" class="mb-4 text-center">
+                </div>
+                <div class="flex justify-between ml-14 mr-14">
+                    <button id="okButton" onclick="hideAlert();"
+                        class="bg-gray-500 text-white  min-w-[100px] px-4 py-2 rounded-md">Cancel</button>
+                    <button id="okButton" onclick="logout();"
+                        class="bg-orange-500 text-white  min-w-[100px] px-4 py-2 rounded-md">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+   <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Simulate a click on the element with id "home"
+        const homeElement = document.getElementById("home");
+        if (homeElement) {
+            homeElement.click();
+        }
+    });
+</script>
+
+
+    <script>
+        function logout() {
+            localStorage.removeItem("username");
+            window.location.href = "login.html";
+        }
+
+        function confirmLogout() {
+            showAlert("Are you sure you want to logout?");
+        }
+        function showAlert(message) {
+            // Set the custom message to the alert text container
+            document.getElementById('alertText').innerHTML = message;
+
+            // Show the alert and overlay
+            document.getElementById('customAlert').classList.remove('hidden');
+            document.getElementById('overlay').classList.remove('hidden');
+        }
+
+        // Function to hide the custom alert
+        function hideAlert() {
+            document.getElementById('customAlert').classList.add('hidden');
+            document.getElementById('overlay').classList.add('hidden');
+        }
+
+
+
+        const sidebar = document.getElementById("sidebar");
+        const contentWrapper = document.getElementById("contentWrapper");
+        const toggleSidebar = document.getElementById("toggleSidebar");
+        const sidebarTextItems = document.querySelectorAll(".sidebar-text");
+        let isCollapsed = false;
+
+        toggleSidebar.addEventListener("click", () => {
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) {
+                sidebar.classList.replace("sidebar-expanded", "sidebar-collapsed");
+                contentWrapper.style.marginLeft = "4.5rem";
+                sidebarTextItems.forEach(item => item.classList.add("hidden"));
+            } else {
+                sidebar.classList.replace("sidebar-collapsed", "sidebar-expanded");
+                contentWrapper.style.marginLeft = "16rem";
+                sidebarTextItems.forEach(item => item.classList.remove("hidden"));
+            }
+        });
+
+        // Function to set the active state and update the content frame
+        function setActive(element, pageUrl) {
+            document.querySelectorAll(".menu-item").forEach(item => {
+                item.classList.remove("active");
+                const img = item.querySelector(".menu-icon");
+                img.src = img.dataset.default; // Reset all images
+            });
+
+            element.classList.add("active");
+            const activeImg = element.querySelector(".menu-icon");
+            activeImg.src = activeImg.dataset.hover; // Change to hover image when active
+
+            // Update the content frame with the new page
+            document.getElementById("contentFrame").src = pageUrl;
+        }
+
+        document.querySelectorAll(".menu-item").forEach(item => {
+            const img = item.querySelector(".menu-icon");
+
+            // Change image on hover
+            item.addEventListener("mouseover", () => {
+                img.src = img.dataset.hover;
+            });
+
+            item.addEventListener("mouseout", () => {
+                if (!item.classList.contains("active")) {
+                    img.src = img.dataset.default;
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

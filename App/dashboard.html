@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper Selo</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <!-- Add Font Awesome -->
+    <link rel="stylesheet" href="css/font-aw.css">
+    <script src="js/script.js"></script>
+    <script>
+        function previewImage(input) {
+            const file = input.files[0];
+            const imagePreview = document.getElementById('image-preview');
+            const uploadPlaceholder = document.getElementById('upload-placeholder');
+            const imagePreviewWrapper = document.getElementById('image-preview-wrapper');
+
+            if (file) {
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Please select a valid image file (JPEG, JPG, PNG)');
+                    resetImage();
+                    return;
+                }
+
+                // Validate file size (2MB max)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Image size should be less than 2MB');
+                    resetImage();
+                    return;
+                }
+
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    imagePreview.src = e.target.result;
+                    uploadPlaceholder.classList.add('hidden');
+                    imagePreviewWrapper.classList.remove('hidden');
+                }
+
+                reader.readAsDataURL(file);
+            } else {
+                resetImage();
+            }
+        }
+
+        function resetImage() {
+            const imagePreview = document.getElementById('image-preview');
+            const uploadPlaceholder = document.getElementById('upload-placeholder');
+            const imagePreviewWrapper = document.getElementById('image-preview-wrapper');
+            const imageUploadInput = document.getElementById('image-upload');
+
+            imagePreview.src = '#';
+            uploadPlaceholder.classList.remove('hidden');
+            imagePreviewWrapper.classList.add('hidden');
+            imageUploadInput.value = ''; // Clear the file input
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const imageUploadContainer = document.getElementById('image-upload-container');
+            const imageUploadInput = document.getElementById('image-upload');
+            const uploadPlaceholder = document.getElementById('upload-placeholder');
+            const browseButton = uploadPlaceholder.querySelector('button');
+
+            // Handle container click
+            imageUploadContainer.addEventListener('click', (e) => {
+                // Only trigger if clicking directly on the container (not on children)
+                if (e.target === imageUploadContainer) {
+                    imageUploadInput.click();
+                }
+            });
+
+            // Handle browse button click
+            browseButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                imageUploadInput.click();
+            });
+
+            // Handle file selection
+            imageUploadInput.addEventListener('change', function () {
+                previewImage(this);
+            });
+
+            // Drag and drop handlers
+            imageUploadContainer.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                this.classList.add('border-orange-500', 'bg-orange-100');
+            });
+
+            imageUploadContainer.addEventListener('dragleave', function () {
+                this.classList.remove('border-orange-500', 'bg-orange-100');
+            });
+
+            imageUploadContainer.addEventListener('drop', function (e) {
+                e.preventDefault();
+                this.classList.remove('border-orange-500', 'bg-orange-100');
+
+                if (e.dataTransfer.files.length) {
+                    imageUploadInput.files = e.dataTransfer.files;
+                    previewImage(imageUploadInput);
+                }
+            });
+
+            const addItemForm = document.querySelector('form');
+            addItemForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+
+                fetch('http://127.0.0.1:8000/add_item.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Item added successfully!');
+                            addItemForm.reset();
+                            resetImage();
+                        } else {
+                            alert('Error adding item: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An unexpected error occurred.');
+                    });
+            });
+        });
+    </script>
+</head>
+
+<body class="bg-gray-50  flex max-h-screen justify-center items-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <button onclick="window.history.back()" class="absolute top-10 left-10  items-center px-4 py-2 hover:bg-orange-600 bg-orange-500 duration-300 hover:duration-300 hover:scale-105 text-white font-semibold rounded-lg shadow-md">
+        Back
+    </button>
+    <div class="bg-gray-50 rounded-lg w-full p-8 md:p-12 ">
+        <h2 class="text-3xl font-semibold text-gray-800 mb-8 text-center">Add New Item</h2>
+        <form class="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-8">
+            <div class="sm:col-span-2">
+                <label for="image-upload" class="block text-sm font-medium text-gray-700 mb-2">
+                    Image:
+                </label>
+                <div id="image-upload-container"
+                    class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center cursor-pointer relative flex flex-col justify-center items-center h-48 bg-gray-50 hover:border-orange-500 transition-colors duration-200">
+                    <input type="file" id="image-upload" name="image" accept="image/*"
+                        class="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                        onchange="previewImage(this)">
+                    <div id="upload-placeholder" class="flex flex-col justify-center items-center">
+                        <i class="fa-solid fa-cloud-arrow-up text-gray-500 text-2xl mb-2"></i>
+                        <p class="text-sm text-gray-600 mb-2">Drag and drop image here</p>
+                        <button type="button"
+                            class="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-100 focus:outline-none focus:ring-orange-500 focus:ring-offset-2 transition-colors duration-200">Browse
+                            Files</button>
+                    </div>
+                    <div id="image-preview-wrapper" class="hidden">
+                        <img id="image-preview" src="#" alt="Image Preview"
+                            class="max-w-full max-h-32 rounded-md shadow-sm object-contain">
+                        <button type="button"
+                            class="absolute top-2 right-2 bg-gray-100 rounded-full p-1 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            onclick="resetImage()">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Allowed file types: JPG, JPEG, PNG. Max size: 2MB.</p>
+            </div>
+
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                    Title:
+                </label>
+                <input type="text" id="title" name="title" placeholder="Enter item title" required
+                    class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3">
+            </div>
+
+            <div>
+                <label for="vegetation" class="block text-sm font-medium text-gray-700 mb-2">
+                    Food Type:
+                </label>
+                <div class="relative">
+                    <select id="vegetation" name="vegetation" required
+                        class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 appearance-none pr-8">
+                        <option value="">Select Option</option>
+                        <option value="Breakfast">Breakfast</option>
+                        <option value="Lunch">Lunch</option>
+                        <option value="Evening">Evening</option>
+                        <option value="Dinner">Dinner</option>
+                        <option value="Drinks">Drinks</option>
+                        <option value="Snaks">Snaks</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
+                    Price:
+                </label>
+                <div class="relative rounded-md shadow-sm">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                    </div>
+                    <input type="number" id="price" name="price" placeholder="Enter price" step="0.01" required
+                        class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 pl-7 pr-3">
+                </div>
+            </div>
+
+            <div>
+                <label for="cost" class="block text-sm font-medium text-gray-700 mb-2">
+                    Cost:
+                </label>
+                <div class="relative rounded-md shadow-sm">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                    </div>
+                    <input type="number" id="cost" name="cost" placeholder="Enter cost" step="0.01" required
+                        class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 pl-7 pr-3">
+                </div>
+            </div>
+
+            <div class="sm:col-span-2">
+                <label for="tag" class="block text-sm font-medium text-gray-700 mb-2">
+                    Tag for Restaurant:
+                </label>
+                <div class="relative">
+                    <select id="tag" name="tag" required
+                        class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 appearance-none pr-8">
+                        <option value="">Select Tag</option>
+                        <option value="appetizer">Appetizer</option>
+                        <option value="main_course">Main Course</option>
+                        <option value="dessert">Dessert</option>
+                        <option value="beverage">Beverage</option>
+                        <option value="side">Side</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sm:col-span-2">
+                <button type="submit"
+                    class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-md focus:outline-none focus:shadow-outline w-full transition-colors duration-200">
+                    Add Item
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

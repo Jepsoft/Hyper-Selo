@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper Selo</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preload" href="css/style.css" as="style">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/script.js" defer></script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar-track {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        .hide-scrollbar {
+            scrollbar-width: none;
+            scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
+        }
+
+        .food-item {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .out-of-stock {
+            opacity: 0.6;
+            border: 2px dashed red;
+            position: relative;
+            /* For absolute positioning of the overlay */
+        }
+
+        .out-of-stock::before {
+            content: 'Out of Stock';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            background-color: rgba(255, 0, 0, 0.7);
+            color: white;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 h-screen overflow-hidden font-sans antialiased">
+    <div class="w-full h-full">
+        <aside class="md:flex flex-col h-full bg-white shadow-lg overflow-y-auto">
+            <div class="sticky top-0 z-10 bg-white border-b border-gray-200 py-4 px-6">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-6">
+                    
+                    <div class="flex justify-between items-center scroll-smooth p-2 hide-scrollbar overflow-x-scroll"
+                        id="category-container">
+                        <template id="category-btn-tpl">
+                            <button
+                                class="whitespace-nowrap mr-2 sm:mr-4 bg-orange-500 text-white rounded-full px-5 py-2 text-sm font-medium transition-colors duration-200 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                            </button>
+                        </template>
+
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="showCurrent" checked
+                                class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500">
+                            <label for="showCurrent" class="ml-2 text-sm text-gray-700">Current</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="showNew"
+                                class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500">
+                            <label for="showNew" class="ml-2 text-sm text-gray-700">New</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="showOutOfStock"
+                                class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <label for="showOutOfStock" class="ml-2 w-20 text-sm text-gray-700">Out of Stock</label>
+                        </div>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="search-input" placeholder="Search items..."
+                            class="w-full py-2.5 pl-10 pr-3 rounded-lg border border-gray-300 focus:outline-none text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-6"
+                id="food-items-container">
+                <template id="food-item-tpl">
+                    <div class="food-item group cursor-pointer bg-white rounded-lg shadow-sm overflow-hidden transform transition-transform duration-200 hover:scale-105 relative"
+                        data-food-id="" data-item-type="">
+                        <div class="relative">
+                            <img loading="lazy" src="" class="w-full h-36 object-cover rounded-t-lg" alt="Food"
+                                width="320" height="144" data-image>
+                            <div class="absolute top-2 left-2 text-white text-xs font-semibold rounded-full px-2 py-1"
+                                data-tag></div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-sm font-semibold text-gray-800 truncate" data-title></h3>
+                                <h3 class="text-sm font-semibold text-gray-800 truncate" data-stock></h3>
+                            </div>
+                            <p class="text-xs text-gray-600 mt-1" data-type></p>
+                            <div class="flex justify-between items-center mt-2">
+                                <p class="text-sm font-bold text-green-700" data-price></p>
+                                <button
+                                    class="bg-orange-500 transition-all duration-500 ease-in-out bg-orange-500 hover:bg-orange-600 text-white rounded-md w-8 h-8 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-orange-300 group-hover:opacity-100 group-hover:scale-100 edit-item-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 m-auto" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path
+                                            d="M13.586 3.586a2 2 0 012.828 2.828l-3.793 3.793-2.828-2.828 3.793-3.793zM15.02 17.98a2 2 0 01-2.828 2.828l-4.242-4.242 1.414-1.414 4.242 4.242zM6 18a2 2 0 01-2-2v-5.172a2 2 0 01.586-1.414l7.414-7.414a2 2 0 012.828 0L18 6a2 2 0 010 2.828L10.586 16.586a2 2 0 01-1.414.586H6z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </aside>
+    </div>
+
+    <svg width="50" height="50" onclick="window.location.href='add_item.html'"
+        class="fixed right-10 bottom-10 bg-orange-500 duration-300 hover:duration-300 hover:scale-105 hover:bg-orange-600 rounded-full p-3 cursor-pointer"
+        viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3v18M3 12h18" stroke="white" stroke-width="4" stroke-linecap="round" />
+    </svg>
+
+    <script>
+        // DOM Elements (Cached for efficiency)
+        const categoryContainer = document.getElementById('category-container');
+        const categoryTemplate = document.getElementById('category-btn-tpl');
+        const foodItemsContainer = document.getElementById('food-items-container');
+        const foodItemTemplate = document.getElementById('food-item-tpl').content;
+        const searchInput = document.getElementById('search-input');
+        const showCurrentCheckbox = document.getElementById('showCurrent');
+        const showNewCheckbox = document.getElementById('showNew');
+        const showOutOfStockCheckbox = document.getElementById('showOutOfStock');
+
+        // Data (Initialized as empty arrays)
+        let allFoodItems = [];
+        let currentCategory = null;
+        let categories = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchFoodItems();
+            setupEventListeners();
+        });
+
+        // Event Listeners (Centralized for better management)
+        function setupEventListeners() {
+            showCurrentCheckbox.addEventListener('change', filterAndRenderFoodItems);
+            showNewCheckbox.addEventListener('change', filterAndRenderFoodItems);
+            showOutOfStockCheckbox.addEventListener('change', filterAndRenderFoodItems);
+            searchInput.addEventListener('input', filterAndRenderFoodItems);
+        }
+
+        // Fetch food items from server (Optimized data handling)
+        async function fetchFoodItems() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/load_data.php');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Combine and transform data in one step
+                allFoodItems = [
+                    ...data.products.without_backup.map(item => ({ ...item, itemType: 'current' })),
+                    ...data.products.with_backup.map(item => ({ ...item, itemType: 'new' })),
+                    ...data.products.out_of_stock.map(item => ({ ...item, itemType: 'out_of_stock' })),
+                ].sort((a, b) => a.stock - b.stock); // Sort once after combining
+
+                // Extract unique categories efficiently
+                categories = [...new Set(allFoodItems.map(item => item.type))];
+                renderCategories(categories);
+                filterAndRenderFoodItems();
+            } catch (error) {
+                console.error('Could not fetch food items:', error);
+                showErrorMessage('Failed to load food items. Please try again later.');
+            }
+        }
+
+        // Render category buttons (Using document fragment for efficiency)
+       function renderCategories(categories) {
+    categoryContainer.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+
+    categories.forEach((category, index) => {
+        const button = createCategoryButton(category);
+        
+        // Auto-select the first category
+        if (index === 0) {
+            currentCategory = category;
+            button.classList.add('bg-orange-600');
+            filterAndRenderFoodItems(); // Load items of the first category
+        }
+
+        fragment.appendChild(button);
+    });
+
+    categoryContainer.appendChild(fragment);
+}
+
+
+        function createCategoryButton(text, isAll = false) {
+            const button = categoryTemplate.content.querySelector('button').cloneNode(true);
+            button.textContent = text;
+            button.classList.toggle('bg-orange-600', isAll); // More concise way to toggle class
+
+            button.addEventListener('click', () => {
+                currentCategory = isAll ? null : text;
+                filterAndRenderFoodItems();
+                document.querySelectorAll('#category-container button').forEach(btn =>
+                    btn.classList.remove('bg-orange-600')
+                );
+                button.classList.add('bg-orange-600');
+            });
+
+            return button;
+        }
+
+        // Main filtering and rendering function
+        function filterAndRenderFoodItems() {
+            const filteredItems = filterFoodItems();
+            renderFoodItems(filteredItems);
+        }
+
+        // Filter items based on all criteria (Combined conditions)
+        function filterFoodItems() {
+            const showCurrent = showCurrentCheckbox.checked;
+            const showNew = showNewCheckbox.checked;
+            const showOutOfStock = showOutOfStockCheckbox.checked;
+            const searchTerm = searchInput.value.toLowerCase();
+
+            return allFoodItems.filter(item => {
+                const typeMatch = !currentCategory || item.type === currentCategory;
+                const searchMatch = item.title.toLowerCase().includes(searchTerm) ||
+                    item.type.toLowerCase().includes(searchTerm);
+                const statusMatch = (showCurrent && item.itemType === 'current') ||
+                    (showNew && item.itemType === 'new') ||
+                    (showOutOfStock && item.itemType === 'out_of_stock');
+                return typeMatch && searchMatch && statusMatch;
+            });
+        }
+
+        // Render food items with transitions (Using document fragment for efficiency)
+        function renderFoodItems(items) {
+            foodItemsContainer.innerHTML = '';
+            if (items.length === 0) {
+                foodItemsContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <p class="text-gray-500">${getEmptyStateMessage()}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            items.forEach(item => {
+                const foodItemEl = foodItemTemplate.cloneNode(true);
+                const div = foodItemEl.querySelector('.food-item');
+
+                div.classList.toggle('out-of-stock', item.stock === 0); // Concise toggle
+
+                div.dataset.foodId = item.product_id;
+                div.dataset.itemType = item.itemType;
+
+                const imageElement = foodItemEl.querySelector('[data-image]');
+                imageElement.src = item.image_path
+                    ? `C:/Program Files/Hyper Selo/resources/app.asar.unpacked/uploads/${item.image_path}`
+                    : 'images/placeholder.png';
+                imageElement.alt = item.title || 'No Image';
+
+                foodItemEl.querySelector('[data-title]').textContent = item.title;
+                foodItemEl.querySelector('[data-type]').textContent = item.type;
+
+                const stockEl = foodItemEl.querySelector('[data-stock]');
+                stockEl.textContent = `Stock ${item.stock}`;
+                if (item.type == "Drink" || item.type == "Other" || item.type == "Dessert" || item.type == "Short Eats") {
+                    stockEl.style.visibility = 'unset';
+
+                } else {
+                    stockEl.style.visibility = 'hidden';
+
+                }
+                stockEl.style.color = item.stock <= 10 ? 'red' : 'green'; // Direct style assignment
+
+                foodItemEl.querySelector('[data-price]').textContent = `LKR ${parseFloat(item.price).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+
+                const tagElement = foodItemEl.querySelector('[data-tag]');
+                if (item.type) {
+                    tagElement.textContent = item.type;
+                    tagElement.classList.remove('hidden');
+                    if (item.title.toLowerCase().includes('vegetable')) {
+                        tagElement.classList.add('bg-green-500');
+                    } else {
+                        tagElement.classList.add('bg-red-500');
+                    }
+                } else {
+                    tagElement.classList.add('hidden');
+                }
+
+                foodItemEl.querySelector('.edit-item-btn').addEventListener('click', () => {
+                    window.location.href = `edit_item.html?id=${item.product_id}`;
+                });
+
+                fragment.appendChild(foodItemEl);
+            });
+            foodItemsContainer.appendChild(fragment);
+        }
+
+        // Get appropriate empty state message
+        function getEmptyStateMessage() {
+            const noTypeSelected = !showCurrentCheckbox.checked && !showNewCheckbox.checked && !showOutOfStockCheckbox.checked;
+            if (noTypeSelected) {
+                return 'Please select at least one item type (Current/New/Out of Stock)';
+            }
+            if (searchInput.value) {
+                return 'No items match your search criteria'
+            }
+            return 'No items found in selected category and filters';
+        }
+
+        // Error handling
+        function showErrorMessage(message) {
+            foodItemsContainer.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <p class="text-red-500">${message}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+
+</html>

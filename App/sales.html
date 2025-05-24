@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper Selo</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <script src="js/script.js" defer></script>
+    <script src="js/loadchart.js"></script>
+    <script src="js/chart.js"></script>
+    <style>
+        .dropdown:hover .dropdown-menu,
+        .dropdown.open .dropdown-menu {
+            display: block;
+        }
+
+        #weekly-performance-chart,
+        #business-trend-chart {
+            max-height: 300px;
+            height: 100px;
+        }
+
+        .date-range-button {
+            @apply px-3 py-1 text-sm font-semibold text-gray-700 rounded-md bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400;
+        }
+
+        .date-range-button.active {
+            @apply bg-blue-500 text-white hover:bg-blue-600;
+        }
+
+        .order-history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .order-history-table th,
+        .order-history-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .order-history-table th {
+            background-color: #dbdbdb;
+            font-weight: 600;
+        }
+
+        .order-history-table tbody tr:nth-child(even) {}
+
+        .order-history-table tbody tr:hover {
+            cursor: pointer;
+        }
+
+        #order-overview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            overflow-y: auto;
+        }
+
+        #order-overview-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+        }
+
+        #close-modal-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: gray;
+        }
+
+        .order-details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .order-details-table th,
+        .order-details-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .order-details-table th {
+            background-color: #f7fafc;
+            font-weight: 600;
+        }
+    </style>
+    <style>
+        @keyframes slow-ping {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            75%,
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .animate-slow-ping {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            border-radius: 9999px;
+            background-color: #22c55e;
+            /* Tailwind orange-500 */
+            animation: slow-ping 2s ease-out infinite;
+            z-index: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div class="mt-4 m-3">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-8">Sales Overview</h1>
+        <div class="flex justify-between">
+            <div class="bg-white rounded-2xl w-1/3 h-auto p-2 mr-2">
+                <h1 class="font-bold text-xl m-3">Cash Payment</h1>
+                <h1 id="total-sales" class="text-orange-500 text-lg font-bold m-3">LKR 0.00</h1>
+                <div class="flex justify-between  mr-[25%] items-center pb-2">
+                    <p onclick="loadTotal('yesterday')"
+                        class="text-[13px] ml-2 mr-2 hover:text-orange-500 hover:scale-105 hover:font-bold cursor-pointer duration-300">
+                        Yesterday</p>
+                    <p onclick="loadTotal('today')"
+                        class="text-[13px] ml-2 mr-2 font-bold text-orange-500 hover:scale-105 hover:font-bold cursor-pointer duration-300">
+                        Today</p>
+                    <p onclick="loadTotal('week')"
+                        class="text-[13px] ml-2 mr-2 hover:text-orange-500 hover:scale-105 hover:font-bold cursor-pointer duration-300">
+                        Week</p>
+                    <p onclick="loadTotal('month')"
+                        class="text-[13px] ml-2 mr-2 hover:text-orange-500 hover:scale-105 hover:font-bold cursor-pointer duration-300">
+                        Month</p>
+                    <p onclick="loadTotal('year')"
+                        class="text-[13px] ml-2 mr-2 hover:text-orange-500 hover:scale-105 hover:font-bold cursor-pointer duration-300">
+                        Year</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl w-1/3 h-auto p-2 ml-2 mr-2">
+                <h1 class="font-bold text-xl m-3">Card Payment</h1>
+                <h1 id="totalcard" class="text-orange-500 text-lg font-bold m-3">LKR 0.00</h1>
+                <div class="flex justify-between mr-[25%] items-center pb-2">
+                    <p onclick="fetchCard('yesterday')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Yesterday</p>
+                    <p onclick="fetchCard('today')"
+                        class="text-[13px] ml-2 mr-2 duration-300 text-orange-500 font-bold hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Today</p>
+                    <p onclick="fetchCard('week')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Week</p>
+                    <p onclick="fetchCard('month')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Month</p>
+                    <p onclick="fetchCard('year')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Year</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl w-1/3 h-auto p-2 ml-2 mr-2">
+                <h1 class="font-bold text-xl m-3">Online Payment</h1>
+                <h1 id="totalonline" class="text-orange-500 text-lg font-bold m-3">LKR 0.00</h1>
+                <div class="flex justify-between mr-[25%] items-center pb-2">
+                    <p onclick="fetchOnline('yesterday')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Yesterday</p>
+                    <p onclick="fetchOnline('today')"
+                        class="text-[13px] ml-2 mr-2 duration-300 text-orange-500 font-bold hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Today</p>
+                    <p onclick="fetchOnline('week')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Week</p>
+                    <p onclick="fetchOnline('month')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Month</p>
+                    <p onclick="fetchOnline('year')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Year</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl w-1/3 h-auto p-2 ml-2 ">
+                <h1 class="font-bold text-xl m-3">Total Expenses</h1>
+                <h1 id="totalAmount" class="text-orange-500 text-lg font-bold m-3">LKR 0.00</h1>
+                <div class="flex justify-between mr-[25%] items-center pb-2">
+                    <p onclick="fetchExpenses('yesterday')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Yesterday</p>
+                    <p onclick="fetchExpenses('today')"
+                        class="text-[13px] ml-2 mr-2 duration-300 text-orange-500 font-bold hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Today</p>
+                    <p onclick="fetchExpenses('week')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Week</p>
+                    <p onclick="fetchExpenses('month')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Month</p>
+                    <p onclick="fetchExpenses('year')"
+                        class="text-[13px] ml-2 mr-2 duration-300 hover:scale-105 hover:text-orange-500 hover:font-bold cursor-pointer">
+                        Year</p>
+                </div>
+            </div>
+
+        </div>
+        <br>
+        <div class="gap-8 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h5 class="text-xl font-semibold text-gray-800">Performance</h5>
+                        <p class="text-sm text-gray-500">Sales & Expenses</p>
+                    </div>
+                    <div class="relative dropdown">
+                        <button data-dropdown-toggle="weekly-performance-dropdown" class="date-range-button">Last 7
+                            Days</button>
+                        <div id="weekly-performance-dropdown"
+                            class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white z-10">
+                            <div class="py-1" role="menu" aria-orientation="vertical"
+                                aria-labelledby="weekly-performance-dropdown">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    data-range="1d">Last Day</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    data-range="7d">Last Week</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    data-range="30d">Last Month</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    data-range="90d">Last 3 Months</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    data-range="180d">Last 6 Months</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    data-range="365d">Last Year</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    data-range="730d">Last 2 Years</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    data-range="1095d">Last 3 Years</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    data-range="1460d">Last 4 Years</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="weekly-performance-chart-container">
+                    <canvas id="weekly-performance-chart"></canvas>
+                    <p class="text-xs text-gray-500 mt-2 text-right">Data for the last <span
+                            id="weekly-performance-range">7</span> days</p>
+                </div>
+            </div>
+
+
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Order History (Last 100)</h2>
+            <table class="order-history-table">
+                <thead>
+                    <tr>
+                        <th>Bill ID</th>
+                        <th>Order Date</th>
+                        <th>Total Amount</th>
+                        <th>Payment Type</th>
+                    </tr>
+                </thead>
+                <tbody id="order-history-body">
+                    <tr>
+                        <td colspan="4" class="text-center py-4">Loading order history...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="order-overview-modal" class="fixed z-50 inset-0 bg-black bg-opacity-50 hidden">
+            <div id="order-overview-content" class="relative bg-white rounded-lg mx-auto p-8 max-w-2xl mt-20">
+                <button id="close-modal-button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                    ×
+                </button>
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Order Overview</h3>
+                <div id="order-details">
+                    <p>Loading order details...</p>
+                </div>
+            </div>
+        </div>
+        <br>
+    </div>
+    <script>
+        function loadTotal(filter) {
+            fetch('http://127.0.0.1:8000/get_cash.php?filter=' + filter)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("total-sales").innerText = 'LKR ' + parseFloat(data.total).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+        loadTotal('today');
+        function fetchOnline(filter) {
+            fetch('http://127.0.0.1:8000/get_online.php?filter=' + filter)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("totalonline").innerText = 'LKR ' + parseFloat(data.total).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                })
+                .catch(err => console.error(err));
+        }
+        function fetchCard(filter) {
+            fetch('http://127.0.0.1:8000/get_card.php?filter=' + filter)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("totalcard").innerText = 'LKR ' + parseFloat(data.total).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                })
+                .catch(err => console.error(err));
+        }
+        function fetchExpenses(filter) {
+            fetch('http://127.0.0.1:8000/get_expenses.php?filter=' + filter)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("totalAmount").innerText = 'LKR ' + parseFloat(data.total).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                })
+                .catch(err => console.error(err));
+        }
+
+        // Load today's expenses by default
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchExpenses('today');
+            fetchCard('today');
+            fetchOnline('today');
+        });
+
+        // Load default on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchCashierBalance('today');
+        });
+    </script>
+</body>
+
+</html>

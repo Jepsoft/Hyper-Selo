@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper Selo</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preload" href="css/style.css" as="style">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/script.js" defer></script>
+    <style>
+        .wave::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 110%;
+            height: 110%;
+            transform: translate(-50%, -50%) scale(0);
+            border-radius: 10px;
+            background: rgba(255, 0, 0, 0.3);
+            animation: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .waving .wave::before {
+            animation: waveEffect 2s infinite ease-out;
+            opacity: 1;
+        }
+
+        .table-active {
+            border-width: 3px !important;
+            box-shadow: 0 0 10px rgba(0, 128, 0, 0.5);
+        }
+
+        .step {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .scale-110 {
+            transform: scale(1.1);
+        }
+
+        @keyframes waveEffect {
+            0% {
+                transform: translate(-50%, -50%) scale(0.1);
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar-track {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        .hide-scrollbar {
+            scrollbar-width: none;
+            scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
+        }
+
+        #order-items-container {
+            scroll-behavior: smooth;
+        }
+
+        .discount-input {
+            width: 100px;
+            text-align: right;
+            padding-right: 8px;
+        }
+
+        .payment-input {
+            width: 120px;
+            text-align: right;
+            padding-right: 8px;
+        }
+
+        .food-item {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .food-item-hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .table-active {
+            box-shadow: 0 0 0 3px rgba(246, 59, 59, 0.5);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 h-screen overflow-hidden font-sans antialiased">
+    <div class="flex w-full h-full">
+        <aside class="hidden md:flex flex-col max-w-[65%] h-full bg-white shadow-lg overflow-y-auto overflow-x-hidden">
+            <div class="sticky top-0 z-10 bg-white border-gray-200 py-4 px-6">
+                <div class="flex justify-between mt-3 mb-3 items-center">
+                    <div class="flex justify-start items-center scroll-smooth p-2 hide-scrollbar overflow-x-scroll"
+                        id="category-container">
+                        <template id="category-btn-tpl">
+                            <button
+                                class="whitespace-nowrap mr-2 sm:mr-4 bg-orange-500 text-white rounded-full px-5 py-2 text-sm font-medium transition-colors duration-200 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                            </button>
+                        </template>
+
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-6">
+                    <div class="flex justify-center items-center cursor-pointer">
+                        <input type="checkbox" id="showCurrent" checked class="ml-2" />
+                        <p class="ml-2 mr-2">Current</p>
+                        <input type="checkbox" id="showNew" class="ml-2" />
+                        <p class="ml-2 mr-2">New</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="orderType" value="normal"
+                                onchange="handleCheckboxChange(this)">
+                            <span class="text-gray-700">Normal</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="orderType" value="full" onchange="handleCheckboxChange(this)">
+                            <span class="text-gray-700">Full</span>
+                        </label>
+                    </div>
+
+                    <script>
+                        function handleCheckboxChange(clickedCheckbox) {
+                            if (clickedCheckbox.checked) {
+                                // Uncheck all other checkboxes with the same name
+                                const checkboxes = document.querySelectorAll('input[name="orderType"]');
+                                checkboxes.forEach(cb => {
+                                    if (cb !== clickedCheckbox) cb.checked = false;
+                                });
+                            }
+                            filterAndRenderFoodItems();
+                        }
+                    </script>
+
+
+
+                    <div class="relative w-full sm:w-64">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="search-input" placeholder="Search items..."
+                            class="w-full py-2.5 pl-10 pr-3 rounded-lg border border-gray-300 min-w-[200px] focus:outline-none text-sm">
+                    </div>
+                </div>
+                <hr class="w-screen -ml-10 mt-3" >
+                <div class=" top-0  mb-[-15px] z-10 bg-white  border-gray-200 py-2 ">
+                    <div id="circleContainer"
+                        class="flex w-full h-[64px] items-center justify-between overflow-x-auto scroll-smooth pl-2 pr-2 space-x-2 hide-scrollbar">
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6"
+                id="food-items-container">
+                <template id="food-item-tpl">
+                    <div class="group cursor-pointer bg-white rounded-lg shadow-sm overflow-hidden transform transition-transform duration-200 hover:scale-105"
+                        data-food-id="">
+                        <div class="relative">
+                            <img loading="lazy" src="" class="w-full h-36 object-cover rounded-t-lg" alt="Food"
+                                width="320" height="144" data-image>
+                            <div class="absolute top-2 left-2 text-white text-xs font-semibold rounded-full px-2 py-1"
+                                data-tag></div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-sm font-semibold text-gray-800 truncate" data-title></h3>
+                            <div class="flex justify-between items-center mt-2">
+                                <p class="text-sm font-bold text-orange-500" data-price></p>
+                                <p class="text-sm font-bold text-orange-500 hidden" data-buy></p>
+                                <p class="text-sm font-bold text-orange-500 hidden" data-get></p>
+                                <button
+                                    class=" bg-orange-500 transition-all duration-500 ease-in-out bg-orange-500 hover:bg-orange-600 text-white rounded-md w-8 h-8 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-orange-300 group-hover:opacity-100 group-hover:scale-100 add-to-order-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 m-auto" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </aside>
+        <aside class="flex-grow h-full bg-gray-100 flex flex-col w-[35%]">
+            <div class="bg-gray-50 border-b border-gray-200 p-4">
+                <h2 class="text-lg font-semibold text-gray-700 mb-3">Customer Information <span
+                        class="font-normal text-sm text-gray-500">(optional)</span></h2>
+                <div class="space-y-3">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 5a2 2 0 012-2h2a2 2 0 012 1.85c.09.84.31 1.66.65 2.45a2 2 0 01-.45 2.1L8 11a16 16 0 006 6l1.6-1.6a2 2 0 012.1-.45c.79.34 1.61.56 2.45.65A2 2 0 0121 17v2a2 2 0 01-2 2h-.25C11.01 21 3 12.99 3 3.25V3a2 2 0 012-2z" />
+                            </svg>
+
+                        </div>
+                        <input type="number" id="customer-phone" placeholder="Mobile Number"
+                            class="w-full py-2.5 pl-10 pr-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 text-sm">
+                    </div>
+                    <div class="relative hidden">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 14c3.866 0 7 2.239 7 5v1H5v-1c0-2.761 3.134-5 7-5z" />
+                                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" fill="none" />
+                            </svg>
+
+                        </div>
+                        <input type="text" id="customer-email" placeholder="Customer Name"
+                            class="w-full py-2.5 pl-10 pr-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-grow overflow-y-auto p-4" id="order-items-container">
+                <h2 class="text-lg font-semibold text-gray-700 mb-3">Order Details</h2>
+                <div class="space-y-4" id="order-items-list">
+                    <div id="empty-order-message" class="text-center text-gray-500 mt-4">No items in order yet.</div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 border-t border-gray-200 pt-4 pl-4 pr-4">
+                <div class="flex justify-between">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3">Order Summary</h2>
+                    <div class="flex items-center">
+                        <span id="current-table-display" class="text-sm font-medium text-gray-600 mr-2">Table:
+                            None</span>
+                        <img src="./icons/trash.png" id="clear-table-btn" class="w-5 h-5 bg-red-600  rounded-full" />
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm text-gray-600 mb-[-10px]  w-full ">
+                        <h4>Additional</h4>
+                        <input type="number" id="additional" oninput="reducefromsub()" placeholder="0"
+                            class="additional-input bg-gray-50 focus:outline-none text-right mr-[-20px]  text-sm p-2  rounded">
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600">
+                        <h4>Subtotal</h4>
+                        <span class="subtotal">LKR 0.00</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600  mr-[-20px]">
+                        <h4>Discount</h4>
+                        <div class="relative flex justify-end text-right ">
+                            <input type="number" id="percenteage-discount-input" oninput="reducefromsub()"
+                                placeholder="0"
+                                class="discount-input bg-gray-50 focus:outline-none  text-sm p-2  rounded">
+                            <span class="absolute right-2 top-2 text-gray-400"></span>
+                            <input type="number" id="manual-discount-input" oninput="reducefromsub()" placeholder="0.00"
+                                class="discount-input bg-gray-50 focus:outline-none  text-sm p-2  rounded">
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 hidden">
+                        <h4>d</h4>
+                        <div class="relative">
+                            <input type="text" id="old-discount-input" placeholder="0.00"
+                                class="discount-input bg-gray-50 focus:outline-none  text-sm p-2  rounded">
+                            <span class="absolute right-2 top-2 text-gray-400"></span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between font-semibold text-gray-800">
+                        <h4>Total</h4>
+                        <span class="total">LKR 0.00</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    <div>
+                        <label for="cash-received" class="block text-sm font-medium text-gray-700">Cash Received</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">LKR</span>
+                            </div>
+                            <div class="flex justify-center">
+                                <input type="number" name="cash-received" value="" id="cash-received"
+                                    class="payment-input mr-2 py-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-12 sm:text-sm border-gray-300 rounded-md"
+                                    placeholder="0.00">
+                                <input type="text" name="balance-output" id="balance-output" disabled
+                                    class="payment-input ml-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-12 sm:text-sm border-gray-300 rounded-md"
+                                    placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="payment-method" class="block text-sm font-medium text-gray-700">Payment
+                            Method</label>
+                        <select id="payment-method"
+                            class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="cash" selected>Cash</option>
+                            <option value="card">Card</option>
+                            <option value="Online Payment">Online Payment</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-between gap-3">
+                    <button onclick="handlePrintKot()"
+                        class="bg-orange-500 hover:bg-orange-600 text-white py-3 mb-4  rounded-lg mt-4 w-[100%] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-300"
+                        id="print-kot-btn">
+                        Print KOT / Save Order
+                    </button>
+                    <button
+                        class="bg-orange-500 hover:bg-orange-600 text-white py-3 mb-4  rounded-lg mt-4 w-[100%] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-300"
+                        id="complete-checkout-btn">
+                        Checkout Order
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </div>
+    <template id="order-item-tpl">
+        <div class="flex bg-white rounded-lg shadow-sm p-3 items-center order-item" data-food-id=""
+            data-order-item-id="">
+            <img loading="lazy" src="" class="w-16 h-16 object-cover rounded-md" alt="Food" width="64" height="64"
+                data-item-image>
+            <div class="ml-4 flex-grow">
+                <h3 class="text-sm font-medium text-gray-800 truncate" data-item-title></h3>
+                <p class="text-xs text-gray-60 hidden" data-item-buy></p>
+                <p class="text-xs text-gray-600 hidden" data-item-get></p>
+                <p class="text-xs text-gray-600" data-item-details></p>
+                <div class="flex items-center justify-between mt-1">
+                    <div class="flex items-center">
+                        <button
+                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-full w-7 h-7 flex justify-center items-center focus:outline-none focus:ring-2 focus:ring-gray-300 decrement-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13H5" />
+                            </svg>
+                        </button>
+                        <span class="mx-2 text-sm font-medium quantity">1</span>
+                        <button
+                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-full w-7 h-7 flex justify-center items-center focus:outline-none focus:ring-2 focus:ring-gray-300 increment-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-end -mr-7 mt-14  ">
+                <label class="mr-2 text-sm text-gray-600">Promotion</label>
+                <input type="checkbox"
+                    class="form-checkbox h-4 w-4 z-50 text-orange-500 focus:ring-orange-500 border-gray-300 rounded apply-discount-checkbox">
+            </div>
+            <div class="ml-2 h-20 ">
+                <button
+                    class="rounded-full w-6 h-6 bg-red-600 hover:bg-red-700 text-white flex justify-center items-center focus:outline-none focus:ring-2 focus:ring-red-300 remove-item-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </template>
+    <div id="overlayi" class="fixed inset-0 z-50 bg-black opacity-50 hidden "></div>
+
+
+    <div id="customAlerti" class="fixed inset-0 flex justify-center items-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+            <div class="mb-4">
+                <h2 class="text-xl font-semibold text-center">Alert</h2>
+            </div>
+            <div id="alertTexti" class="mb-4 text-center">
+            </div>
+            <div class="flex justify-between ml-[15%] mr-[15%]">
+                <button id="okButton" onclick="hideAlerti();"
+                    class="bg-gray-500 text-white  min-w-[100px] px-4 py-2 rounded-md">Cancel</button>
+                <button id="okButton" onclick="congromit();"
+                    class="bg-orange-500 text-white  min-w-[100px] px-4 py-2 rounded-md">Continue</button>
+            </div>
+        </div>
+    </div>
+    <div id="overlayir" class="fixed inset-0 z-50 bg-black opacity-50 hidden"></div>
+
+
+    <div id="customAlertir" class="fixed inset-0 flex justify-center items-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+            <div class="mb-4">
+                <h2 class="text-xl font-semibold text-center">Alert</h2>
+            </div>
+            <div id="alertTextir" class="mb-4 text-center">
+            </div>
+            <div class="flex justify-between ml-14 mr-14">
+                <button id="okButton" onclick="hideAlertir();"
+                    class="bg-gray-500 text-white  min-w-[100px] px-4 py-2 rounded-md">Cancel</button>
+                <button id="okButton" onclick="congromitr();"
+                    class="bg-orange-500 text-white  min-w-[100px] px-4 py-2 rounded-md">Continue</button>
+            </div>
+        </div>
+    </div>
+    <div id="overlay" class="fixed inset-0 z-50 bg-black opacity-50 hidden"></div>
+
+
+    <div id="customAlert" class="fixed inset-0 flex justify-center items-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+            <div class="mb-4">
+                <h2 class="text-xl font-semibold text-center">Alert</h2>
+            </div>
+            <div id="alertText" class="mb-4 text-center">
+            </div>
+            <div class="flex justify-center">
+                <button id="okButton" onclick="hideAlert();"
+                    class="bg-orange-500 text-white  min-w-[100px] px-4 py-2 rounded-md">Ok</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Current selected table
+        let currentTable = null;
+
+        function confirmLogout() {
+            showAlert("Are you sure you want to logout?");
+        }
+        function showAlert(message) {
+            document.getElementById('alertText').innerHTML = message;
+            document.getElementById('customAlert').classList.remove('hidden');
+            document.getElementById('overlay').classList.remove('hidden');
+        }
+
+        function hideAlert() {
+            document.getElementById('customAlert').classList.add('hidden');
+            document.getElementById('overlay').classList.add('hidden');
+        }
+
+        function showAlerti(message) {
+            document.getElementById('alertTexti').innerHTML = message;
+            document.getElementById('customAlerti').classList.remove('hidden');
+            document.getElementById('overlayi').classList.remove('hidden');
+        }
+
+        function showAlertir(message) {
+            document.getElementById('alertTextir').innerHTML = message;
+            document.getElementById('customAlertir').classList.remove('hidden');
+            document.getElementById('overlayir').classList.remove('hidden');
+        }
+        function reducefromsub() {
+
+            updateOrderSummary();
+            const subtotal = getSubtotalValue();
+            const percentage = parseFloat(percentageInput.value) || 0;
+            const discount = (percentage / 100) * subtotal;
+            manualInput.value = discount.toFixed(2);
+            updateOrderSummary();
+
+        }
+        function congromitr() {
+            hideAlertir();
+            do_the_chekoutr();
+        }
+
+        function congromit() {
+            hideAlerti();
+            do_the_chekout();
+        }
+
+        function hideAlerti() {
+            document.getElementById('customAlerti').classList.add('hidden');
+            document.getElementById('overlayi').classList.add('hidden');
+        }
+
+        function hideAlertir() {
+            document.getElementById('customAlertir').classList.add('hidden');
+            document.getElementById('overlayir').classList.add('hidden');
+        }
+
+        // Update balance when cash received changes
+        function updateBalance() {
+            const rawText = document.querySelector('.total').textContent;
+            const numberOnly = parseFloat(rawText.replace(/[^\d.]/g, ''));
+            const cash = parseFloat(document.getElementById('cash-received').value);
+            document.getElementById('balance-output').value = cash - numberOnly;
+        }
+        function handlePrintKot() {
+            // saveorderkot();
+            position = null;
+            do_the_chekout();
+        }
+        // DOM Elements
+        const categoryContainer = document.getElementById('category-container');
+        const categoryTemplate = document.getElementById('category-btn-tpl');
+        const foodItemsContainer = document.getElementById('food-items-container');
+        const foodItemTemplate = document.getElementById('food-item-tpl');
+        const orderItemsContainer = document.getElementById('order-items-container');
+        const orderItemsList = document.getElementById('order-items-list');
+        const orderItemTemplate = document.getElementById('order-item-tpl');
+        const searchInput = document.getElementById('search-input');
+        const emptyOrderDiv = document.getElementById('empty-order-message');
+        const completeCheckoutButton = document.getElementById('complete-checkout-btn');
+        const customerPhoneInput = document.getElementById('customer-phone');
+        const customerEmailInput = document.getElementById('customer-email');
+        const manualDiscountInput = document.getElementById('manual-discount-input');
+        const disper = document.getElementById('percenteage-discount-input');
+        const cashReceivedInput = document.getElementById('cash-received');
+        const additional = document.getElementById('additional');
+        const paymentMethodSelect = document.getElementById('payment-method');
+        const showCurrentCheckbox = document.getElementById('showCurrent');
+        const showNewCheckbox = document.getElementById('showNew');
+        const currentTableDisplay = document.getElementById('current-table-display');
+        const clearTableBtn = document.getElementById('clear-table-btn');
+        const percentageInput = document.getElementById("percenteage-discount-input");
+        const manualInput = document.getElementById("manual-discount-input");
+        const subtotalText = document.querySelector(".subtotal");
+        function getSubtotalValue() {
+            const subtotalStr = subtotalText.textContent.replace(/[^\d.]/g, '');
+            return parseFloat(subtotalStr) || 0;
+        }
+
+
+
+        manualInput.addEventListener("input", function () {
+            const subtotal = getSubtotalValue();
+            const discount = parseFloat(manualInput.value) || 0;
+            const percentage = (discount / subtotal) * 100;
+            percentageInput.value = subtotal ? percentage.toFixed(2) : "0.00";
+        });
+        // Data
+        let allFoodItems = [];
+        let currentItems = [];
+        let newItems = [];
+        let currentCategory = null;
+        let orderItems = [];
+        let orderItemCounter = 0;
+        let currentPage = 1;
+        var position = null;
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchFoodItems(page = currentPage, append = false);
+            updateOrderSummary();
+            completeCheckoutButton.addEventListener('click', completeCheckout);
+            showCurrentCheckbox.addEventListener('change', filterAndRenderFoodItems);
+            showNewCheckbox.addEventListener('change', filterAndRenderFoodItems);
+            cashReceivedInput.addEventListener('input', updateBalance);
+            searchInput.addEventListener('input', filterAndRenderFoodItems);
+            clearTableBtn.addEventListener('click', clearCurrentTable);
+            // Initialize tables
+            initTables();
+            disblekotbutton()
+        });
+        function filterfullornoml() {
+            const showCurrent = showCurrentCheckbox.checked;
+            const showNew = showNewCheckbox.checked;
+            const searchTerm = searchInput.value.toLowerCase();
+
+            // Get selected radio value (normal/full)
+            const selectedType = document.querySelector('input[name="orderType"]:checked')?.value;
+
+            if (!showCurrent && !showNew) {
+                foodItemsContainer.innerHTML = '<p class="text-gray-500 p-6 text-center">Please select at least one item type</p>';
+                return;
+            }
+
+            let filteredItems = allFoodItems.filter(item => {
+                const isInCategory = !currentCategory || item.type.toLowerCase() === currentCategory.toLowerCase();
+                const matchesSearch = item.title.toLowerCase().includes(searchTerm) ||
+                    item.type.toLowerCase().includes(searchTerm);
+                const shouldShow = (showCurrent && item.itemType === 'current') ||
+                    (showNew && item.itemType === 'new');
+
+                const isFullItem = /full/i.test(item.title) || /full/i.test(item.type);
+
+                if (selectedType === 'full') {
+                    return isInCategory && matchesSearch && shouldShow && isFullItem;
+                } else {
+                    return isInCategory && matchesSearch && shouldShow && !isFullItem;
+                }
+            });
+
+            // Calculate available stock
+            filteredItems = filteredItems.map(item => {
+                const orderedQuantity = orderItems.reduce((total, orderItem) => {
+                    return (orderItem.id === item.id && orderItem.itemType === item.itemType) ?
+                        total + orderItem.quantity :
+                        total;
+                }, 0);
+
+                return {
+                    ...item,
+                    availableStock: Math.max(0, item.originalStock - orderedQuantity)
+                };
+            });
+
+            if (filteredItems.length === 0) {
+                foodItemsContainer.innerHTML = '<p class="text-gray-500 p-6 text-center">No items match your search criteria</p>';
+            } else {
+                renderFoodItems(filteredItems);
+            }
+        }
+
+        // Initialize table UI and functionality
+        function initTables() {
+            const container = document.getElementById('circleContainer');
+            container.innerHTML = '';
+
+            function clearActiveState() {
+                document.querySelectorAll('.step').forEach(t => {
+                    t.classList.remove('table-active', 'scale-110', 'bg-green-100');
+                });
+            }
+
+            // Add "Take Away" table first
+            const takeAwayDiv = document.createElement('div');
+            takeAwayDiv.className = `
+        step w-12 h-12 flex-shrink-0 relative flex justify-center items-center
+        border-2 border-orange-500 text-orange-500 font-bold rounded-[10px]
+        shadow-md cursor-pointer transition-transform duration-200
+    `.trim();
+            takeAwayDiv.dataset.tableNumber = 'Take Away';
+            takeAwayDiv.innerHTML = `
+        <span class="z-10 text-[10px] text-center leading-tight">Take<br>Away</span>
+        <span class="wave absolute top-0 left-0 w-full h-full rounded-[10px] pointer-events-none"></span>
+    `;
+
+            takeAwayDiv.addEventListener('click', () => {
+                clearActiveState();
+                takeAwayDiv.classList.add('table-active', 'scale-110', 'border-red-500', 'text-red-500');
+                loadTableOrder('Take Away');
+                filterAndRenderFoodItems();
+                disblekotbutton();
+            });
+
+            container.appendChild(takeAwayDiv);
+
+            // Create tables 1-15
+            for (let i = 1; i <= 6; i++) {
+                const div = document.createElement('div');
+                div.className = `
+            step w-12 h-12 flex-shrink-0 relative flex justify-center items-center
+            border-2 border-green-500 text-green-500 font-bold rounded-[10px]
+            shadow-md cursor-pointer transition-transform duration-200
+        `.trim();
+                div.dataset.tableNumber = i;
+
+                const tableOrder = localStorage.getItem(`table_order_${i}`);
+                if (tableOrder) {
+                    div.classList.add('bg-red-100', 'border-red-500', 'text-red-500',);
+                }
+
+                div.innerHTML = `
+            <span class="z-10 text-sm">${i}</span>
+            <span class="wave absolute top-0 left-0 w-full h-full rounded-[10px] pointer-events-none"></span>
+        `;
+
+                div.addEventListener('click', () => {
+                    clearActiveState();
+                    div.classList.add('table-active', 'scale-110', 'bg-green-100');
+                    loadTableOrder(i);
+                    filterAndRenderFoodItems();
+                    disblekotbutton();
+                });
+
+                container.appendChild(div);
+            }
+
+            setupTableDrag();
+        }
+
+
+        // Setup drag functionality for tables
+        function setupTableDrag() {
+            const scrollContainer = document.getElementById('circleContainer');
+
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            scrollContainer.addEventListener('mousedown', (e) => {
+                isDown = true;
+                scrollContainer.classList.add('cursor-grabbing');
+                startX = e.pageX - scrollContainer.offsetLeft;
+                scrollLeft = scrollContainer.scrollLeft;
+            });
+
+            scrollContainer.addEventListener('mouseleave', () => {
+                isDown = false;
+                scrollContainer.classList.remove('cursor-grabbing');
+            });
+
+            scrollContainer.addEventListener('mouseup', () => {
+                isDown = false;
+                scrollContainer.classList.remove('cursor-grabbing');
+            });
+
+            scrollContainer.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - scrollContainer.offsetLeft;
+                const walk = (x - startX) * 2;
+                scrollContainer.scrollLeft = scrollLeft - walk;
+            });
+
+            // Touch events
+            scrollContainer.addEventListener('touchstart', (e) => {
+                isDown = true;
+                startX = e.touches[0].pageX;
+                scrollLeft = scrollContainer.scrollLeft;
+            });
+
+            scrollContainer.addEventListener('touchend', () => {
+                isDown = false;
+            });
+
+            scrollContainer.addEventListener('touchmove', (e) => {
+                if (!isDown) return;
+                const x = e.touches[0].pageX;
+                const walk = (x - startX) * 2;
+                scrollContainer.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        // Load order for a specific table
+        function loadTableOrder(tableNumber) {
+            currentTable = tableNumber;
+            currentTableDisplay.textContent = `Table: ${tableNumber}`;
+
+            const tableOrder = localStorage.getItem(`table_order_${tableNumber}`);
+
+            if (tableOrder) {
+                const orderData = JSON.parse(tableOrder);
+
+                // Restore order items
+                orderItems = orderData.orderItems || [];
+                orderItemCounter = orderData.orderItemCounter || 0;
+
+                // Restore printed quantities if they exist
+                if (orderData.printedQuantities) {
+                    orderItems.forEach(item => {
+                        if (orderData.printedQuantities[item.orderItemId]) {
+                            item.printed_quantity = orderData.printedQuantities[item.orderItemId];
+                        }
+                    });
+                }
+
+                // Restore other data...
+                customerPhoneInput.value = orderData.customerPhone || '';
+                customerEmailInput.value = orderData.customerName || '';
+                manualDiscountInput.value = orderData.manualDiscount || '';
+                additional.value = orderData.additional || '';
+                disper.value = orderData.disper || '';
+                cashReceivedInput.value = orderData.cashReceived || '';
+                paymentMethodSelect.value = orderData.paymentMethod || 'cash';
+
+                renderOrderItems();
+                updateOrderSummary();
+                updateBalance();
+            } else {
+                // Clear current order if no saved order for this table
+                orderItems = [];
+                orderItemCounter = 0;
+                customerPhoneInput.value = '';
+                customerEmailInput.value = '';
+                additional.value = '';
+                disper.value = '';
+                manualDiscountInput.value = '';
+                cashReceivedInput.value = '';
+                paymentMethodSelect.value = 'cash';
+
+                renderOrderItems();
+                updateOrderSummary();
+                updateBalance();
+            }
+        }
+
+        // Save current order to table
+        function saveTableOrder() {
+            if (!currentTable) return;
+
+            const orderData = {
+                orderItems: orderItems,
+                orderItemCounter: orderItemCounter,
+                customerPhone: customerPhoneInput.value,
+                customerName: customerEmailInput.value,
+                manualDiscount: manualDiscountInput.value,
+                additional: additional.value,
+                Disper: disper.value,
+                cashReceived: cashReceivedInput.value,
+                paymentMethod: paymentMethodSelect.value,
+                // Add printed quantities to the saved data
+                printedQuantities: orderItems.reduce((acc, item) => {
+                    acc[item.orderItemId] = item.printed_quantity;
+                    return acc;
+                }, {})
+            };
+
+            localStorage.setItem(`table_order_${currentTable}`, JSON.stringify(orderData));
+
+            // Update table UI to show it has an order
+            document.querySelectorAll('.step').forEach(table => {
+                if (table.dataset.tableNumber == currentTable) {
+                    table.classList.add('bg-red-100', 'border-[3px]', 'border-red-600', 'text-red-500', 'scale-110');
+                }
+            });
+        }
+
+        // Clear current table order
+        function clearCurrentTable() {
+            if (!currentTable) {
+                showAlert('No table selected');
+                return;
+            }
+
+            showAlerti('Are you sure you want to clear this table order?');
+
+            // Set up the confirm function
+            window.congromit = function () {
+                localStorage.removeItem(`table_order_${currentTable}`);
+
+                // Clear UI
+                orderItems = [];
+                orderItemCounter = 0;
+                renderOrderItems();
+                updateOrderSummary();
+
+                // Update table UI
+                document.querySelectorAll('.step').forEach(table => {
+                    if (table.dataset.tableNumber == currentTable) {
+                        table.classList.remove('bg-red-100', 'border-red-600', 'text-red-500');
+                        table.classList.remove('table-active');
+                    }
+                });
+
+                currentTable = null;
+                currentTableDisplay.textContent = 'Table: Take Away';
+
+                hideAlerti();
+                window.location.reload();
+            };
+        }
+        foodItemsContainer.addEventListener('scroll', () => {
+            const { scrollTop, scrollHeight, clientHeight } = foodItemsContainer;
+            if (scrollHeight - scrollTop <= clientHeight * 1.2 && currentPage < totalPages && !isLoading) {
+                fetchFoodItems(currentPage + 1, true);
+            }
+        });
+        async function fetchFoodItems(page = currentPage, append = false) {
+            try {
+                const searchInput = document.getElementById('searchInput'); // Assuming searchInput is an element
+                const currentCategory = ''; // Assuming currentCategory is defined elsewhere or get it dynamically
+
+                const url = new URL('http://127.0.0.1:8000/load_data.php');
+                url.searchParams.append('page', page);
+                url.searchParams.append('limit', 6); // Your backend uses this limit
+                url.searchParams.append('search', searchInput ? searchInput.value : '');
+                url.searchParams.append('category', currentCategory || '');
+                url.searchParams.append('orderType', document.querySelector('input[name="orderType"]:checked')?.value || '');
+
+                console.log(`Fetching page: ${page}, append: ${append}`);
+                console.log(`Request URL: ${url.toString()}`);
+
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Fetch error - Response not OK:', response.status, errorText);
+                    // Optionally, display a user-friendly error message on the page
+                    // e.g., document.getElementById('errorMessage').textContent = 'Failed to load items.';
+                    return;
+                }
+
+                const data = await response.json();
+                console.log('Data received from PHP:', data); // CRUCIAL: Inspect this object in your browser console
+
+                // Log lengths to see what PHP actually sent for this page
+                if (data.products) {
+                    console.log('PHP sent (without_backup):', data.products.without_backup ? data.products.without_backup.length : 0, 'items');
+                    console.log('PHP sent (with_backup):', data.products.with_backup ? data.products.with_backup.length : 0, 'items');
+                    console.log('PHP sent (out_of_stock):', data.products.out_of_stock ? data.products.out_of_stock.length : 0, 'items');
+                } else {
+                    console.error('Data from PHP does not contain a "products" object:', data);
+                    return;
+                }
+
+                if (data.pagination) {
+                    console.log('PHP pagination info:', data.pagination);
+                }
+
+
+                const fetchedWithoutBackupItems = (data.products.without_backup || []).map(item => ({
+                    ...item,
+                    discount: parseFloat(item.Discount) || 0,
+                    itemType: 'current', // This implies items that don't have a backup or whose backup doesn't exist
+                    originalStock: parseInt(item.stock)
+                }));
+
+                const fetchedWithBackupItems = (data.products.with_backup || []).map(item => ({
+                    ...item,
+                    discount: parseFloat(item.Discount) || 0,
+                    itemType: 'new', // This implies items that do have an existing backup
+                    originalStock: parseInt(item.stock)
+                }));
+
+                if (append) {
+                    // Ensure allFoodItems is an array before spreading
+                    if (!Array.isArray(allFoodItems)) {
+                        allFoodItems = [];
+                    }
+                    allFoodItems = [...allFoodItems, ...fetchedWithoutBackupItems, ...fetchedWithBackupItems];
+                    // currentItems and newItems could represent the latest fetched batch
+                    currentItems = fetchedWithoutBackupItems;
+                    newItems = fetchedWithBackupItems;
+                } else {
+                    allFoodItems = [...fetchedWithoutBackupItems, ...fetchedWithBackupItems];
+                    currentItems = fetchedWithoutBackupItems;
+                    newItems = fetchedWithBackupItems;
+                }
+
+                console.log(`Total allFoodItems after processing page ${page}: ${allFoodItems.length} items`);
+
+                // Assuming renderCategories and filterAndRenderFoodItems are defined elsewhere
+                // and use the global allFoodItems, currentItems, newItems.
+                const categories = [...new Set(allFoodItems.map(item => item.type))];
+                if (typeof renderCategories === 'function') {
+                    renderCategories(categories);
+                } else {
+                    console.warn('renderCategories function is not defined.');
+                }
+
+                if (typeof filterAndRenderFoodItems === 'function') {
+                    filterAndRenderFoodItems();
+                } else {
+                    console.warn('filterAndRenderFoodItems function is not defined.');
+                }
+
+            } catch (error) {
+                console.error('Error in fetchFoodItems function:', error);
+                // Optionally, display a user-friendly error message
+                // e.g., document.getElementById('errorMessage').textContent = 'An error occurred while fetching items.';
+            }
+        }
+        function filterfullornoml() {
+            const showCurrent = showCurrentCheckbox.checked;
+            const showNew = showNewCheckbox.checked;
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedType = document.querySelector('input[name="orderType"]:checked')?.value;
+
+
+            // If both checkboxes are unchecked, show nothing
+            if (!showCurrent && !showNew) {
+                foodItemsContainer.innerHTML = '<p class="text-gray-500 p-6 text-center">Please select at least one item type</p>';
+                return;
+            }
+
+            let filteredItems = allFoodItems.filter(item => {
+                // Basic filters
+                const isInCategory = !currentCategory || item.type.toLowerCase() === currentCategory.toLowerCase();
+                const matchesSearch = item.title.toLowerCase().includes(searchTerm) ||
+                    item.type.toLowerCase().includes(searchTerm);
+                const shouldShow = (showCurrent && item.itemType === 'current') ||
+                    (showNew && item.itemType === 'new');
+
+                // Full item detection (case insensitive)
+                const isFullItem = /full/i.test(item.title) || /full/i.test(item.type);
+
+                // Apply full item filtering
+                if (showFullItems) {
+                    return isInCategory && matchesSearch && shouldShow && isFullItem;
+                } else {
+                    return isInCategory && matchesSearch && shouldShow && !isFullItem;
+                }
+            });
+
+            // Calculate available stock
+            filteredItems = filteredItems.map(item => {
+                const orderedQuantity = orderItems.reduce((total, orderItem) => {
+                    return (orderItem.id === item.id && orderItem.itemType === item.itemType) ?
+                        total + orderItem.quantity :
+                        total;
+                }, 0);
+
+                return {
+                    ...item,
+                    availableStock: Math.max(0, item.originalStock - orderedQuantity)
+                };
+            });
+
+            if (filteredItems.length === 0) {
+                foodItemsContainer.innerHTML = '<p class="text-gray-500 p-6 text-center">No items match your search criteria</p>';
+            } else {
+                renderFoodItems(filteredItems);
+            }
+        }
+
+        function filterAndRenderFoodItems() {
+            const showCurrent = showCurrentCheckbox.checked;
+            const showNew = showNewCheckbox.checked;
+            const searchTerm = searchInput.value.toLowerCase();
+
+            // Get selected radio value (normal/full)
+            const selectedType = document.querySelector('input[name="orderType"]:checked')?.value;
+            if (selectedType == 'full') {
+                document.querySelector('input[name="orderType"]:checked')?.value
+            }
+
+            // If both checkboxes are unchecked, show nothing
+            if (!showCurrent && !showNew) {
+                foodItemsContainer.innerHTML = '<p class="text-gray-500 p-6 text-center">Please select at least one item type</p>';
+                return;
+            }
+
+            let filteredItems = allFoodItems.filter(item => {
+                // Basic filters
+                const isInCategory = !currentCategory || item.type.toLowerCase() === currentCategory.toLowerCase();
+                const matchesSearch = item.title.toLowerCase().includes(searchTerm) ||
+                    item.type.toLowerCase().includes(searchTerm);
+                const shouldShow = (showCurrent && item.itemType === 'current') ||
+                    (showNew && item.itemType === 'new');
+
+                // Full item detection (case insensitive)
+                const isFullItem = /full/i.test(item.title) || /full/i.test(item.type);
+
+                // Apply filtering based on selected type
+                if (selectedType === 'full') {
+                    return isInCategory && matchesSearch && shouldShow && isFullItem;
+                } else if (selectedType === 'normal') {
+                    return isInCategory && matchesSearch && shouldShow && !isFullItem;
+                } else {
+                    // If neither is selected (or both are selected), show all
+                    return isInCategory && matchesSearch && shouldShow;
+                }
+            });
+
+            // Calculate available stock
+            filteredItems = filteredItems.map(item => {
+                const orderedQuantity = orderItems.reduce((total, orderItem) => {
+                    return (orderItem.id === item.id && orderItem.itemType === item.itemType) ?
+                        total + orderItem.quantity :
+                        total;
+                }, 0);
+
+                return {
+                    ...item,
+                    availableStock: Math.max(0, item.originalStock - orderedQuantity)
+                };
+            });
+
+            if (filteredItems.length === 0) {
+                foodItemsContainer.innerHTML = '<p class="text-gray-500 p-6 text-center">No items match your search criteria</p>';
+            } else {
+                renderFoodItems(filteredItems);
+            }
+        }
+
+        function renderFoodItems(items) {
+            foodItemsContainer.innerHTML = '';
+
+            items.forEach(item => {
+                const foodItemEl = foodItemTemplate.content.cloneNode(true);
+                const div = foodItemEl.querySelector('.group');
+                div.dataset.foodId = item.id;
+                div.dataset.itemType = item.itemType; // Store item type in dataset
+
+                // Set image source
+                foodItemEl.querySelector('[data-image]').src =
+                    `C:/Program Files/Hyper Selo/resources/app.asar.unpacked/uploads/${item.image_path}`;
+
+                // Set title with available stock
+                foodItemEl.querySelector('[data-title]').textContent =
+                    `${item.title} | Stock - ${item.availableStock}`;
+
+                // Set price
+                foodItemEl.querySelector('[data-price]').textContent =
+                    `LKR ${parseFloat(item.price).toLocaleString('en-LK', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}`;
+
+                // Set tag if available
+                const tagElement = foodItemEl.querySelector('[data-tag]');
+                if (item.type) {
+                    tagElement.textContent = item.type;
+                    tagElement.classList.remove('hidden');
+                } else {
+                    tagElement.classList.add('hidden');
+                }
+
+                // Add to order button
+                const addToOrderBtn = foodItemEl.querySelector('.add-to-order-btn');
+                addToOrderBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    addToOrder(item, item.availableStock);
+                });
+
+                // Disable button if no stock available
+                if (item.availableStock <= 0) {
+                    addToOrderBtn.disabled = true;
+                    addToOrderBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    addToOrderBtn.disabled = false;
+                    addToOrderBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
+                foodItemsContainer.appendChild(foodItemEl);
+            });
+        }
+        // Render category buttons
+        function renderCategories(categories) {
+            categoryContainer.innerHTML = '';
+
+            // Track buttons for styling updates
+            const buttons = [];
+
+            // Render each category as a button
+            categories.forEach((category, index) => {
+                const button = categoryTemplate.content.cloneNode(true).querySelector('button');
+                button.textContent = category;
+                button.addEventListener('click', () => {
+                    currentCategory = category;
+                    filterAndRenderFoodItems();
+
+                    // Update active button styling
+                    buttons.forEach(btn => btn.classList.remove('bg-orange-600'));
+                    button.classList.add('bg-orange-600');
+                });
+                categoryContainer.appendChild(button);
+                buttons.push(button);
+
+                // Automatically click the first button
+                if (index === 0) {
+                    currentCategory = category;
+                    button.classList.add('bg-orange-600');
+                    filterAndRenderFoodItems();
+                }
+            });
+        }
+
+        function disblekotbutton() {
+            if (currentTable == "Take Away") {
+                document.getElementById('print-kot-btn').disabled = true;
+            } else {
+                document.getElementById('print-kot-btn').disabled = false;
+            }
+        }
+        // Render food items with updated stock information
+        function renderFoodItems(items) {
+            foodItemsContainer.innerHTML = '';
+
+            if (items.length === 0) {
+                foodItemsContainer.innerHTML = '<p class="text-gray-500 p-6 text-center">No items found.</p>';
+                return;
+            }
+
+            items.forEach(item => {
+                // Calculate available stock by subtracting ordered quantities
+                const orderedQuantity = orderItems.reduce((total, orderItem) => {
+                    return orderItem.id === item.id ? total + orderItem.quantity : total;
+                }, 0);
+
+                const availableStock = Math.max(0, item.originalStock);
+
+                const foodItemEl = foodItemTemplate.content.cloneNode(true);
+                const div = foodItemEl.querySelector('.group');
+                div.dataset.itemType = item.itemType;
+                div.dataset.foodId = item.id;
+                if (currentTable == null) {
+                    currentTable = "Take Away";
+                }
+                if (currentTable == "Take Away") {
+                    foodItemEl.querySelector('[data-image]').src = `C:/Program Files/Hyper Selo/resources/app.asar.unpacked/uploads/${item.image_path}`;
+                    if (item.type == "Drink" || item.type == "Other" || item.type == "Dessert" || item.type == "Short Eats") {
+                        foodItemEl.querySelector('[data-title]').textContent = `${item.title} | Stock - ${availableStock}`;
+                        foodItemEl.querySelector('[data-buy]').textContent = `${item.buy}`;
+                        foodItemEl.querySelector('[data-get]').textContent = `${item.get}`;
+                        foodItemEl.querySelector('[data-price]').textContent = `LKR ${parseFloat(item.price).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    } else {
+                        foodItemEl.querySelector('[data-title]').textContent = `${item.title}`;
+                        foodItemEl.querySelector('[data-buy]').textContent = `${item.buy}`;
+                        foodItemEl.querySelector('[data-get]').textContent = `${item.get}`;
+                        foodItemEl.querySelector('[data-price]').textContent = `LKR ${parseFloat(item.price).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    }
+                } else {
+                    foodItemEl.querySelector('[data-image]').src = `C:/Program Files/Hyper Selo/resources/app.asar.unpacked/uploads/${item.image_path}`;
+                    if (item.type == "Drink" || item.type == "Other" || item.type == "Dessert" || item.type == "Short Eats") {
+                        foodItemEl.querySelector('[data-title]').textContent = `${item.title} | Stock - ${availableStock}`;
+                        foodItemEl.querySelector('[data-buy]').textContent = `${item.buy}`;
+                        foodItemEl.querySelector('[data-get]').textContent = `${item.get}`;
+                        foodItemEl.querySelector('[data-price]').textContent = `LKR ${parseFloat(item.cost).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    } else {
+                        foodItemEl.querySelector('[data-title]').textContent = `${item.title}`;
+                        foodItemEl.querySelector('[data-buy]').textContent = `${item.buy}`;
+                        foodItemEl.querySelector('[data-get]').textContent = `${item.get}`;
+                        foodItemEl.querySelector('[data-price]').textContent = `LKR ${parseFloat(item.cost).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    }
+                }
+                const tagElement = foodItemEl.querySelector('[data-tag]');
+                if (item.type) {
+                    tagElement.textContent = item.type;
+                    tagElement.classList.remove('hidden');
+                    if (item.title.toLowerCase().includes('vegetable')) {
+                        tagElement.classList.add('bg-green-500');
+                    } else {
+                        tagElement.classList.add('bg-red-500');
+                    }
+                } else {
+                    tagElement.classList.add('hidden');
+                }
+
+                const addToOrderBtn = foodItemEl.querySelector('.add-to-order-btn');
+                addToOrderBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    addToOrder(item, availableStock);
+                });
+
+                foodItemsContainer.appendChild(foodItemEl);
+            });
+        }
+
+        function addToOrder(foodItem, availableStock) {
+            disblekotbutton();
+            if (!currentTable) {
+                showAlert('Please select a Table or Take Away first');
+                return;
+            }
+
+            const existingItemIndex = orderItems.findIndex(item =>
+                item.id === foodItem.id &&
+                item.title === foodItem.title &&
+                item.price === foodItem.price &&
+                item.type === foodItem.type
+            );
+
+            if (existingItemIndex !== -1) {
+                // Check stock limit
+                if ((orderItems[existingItemIndex].quantity + 1) > availableStock) {
+                    showAlert(`Cannot add more. Only ${availableStock} available in stock.`);
+                    return;
+                }
+
+                let item = orderItems[existingItemIndex];
+                item.quantity += 1;
+
+                // Calculate promotion only if buy & get set
+                if (item.buy && item.get) {
+                    const groupCount = Math.floor(item.quantity / item.buy);
+                    item.free_quantity = groupCount * item.get;
+                    item.isPromotionApplied = groupCount > 0;
+                } else {
+                    item.free_quantity = 0;
+                    item.isPromotionApplied = false;
+                }
+
+                item.isNew = true;
+
+                // Update UI quantity display if needed
+                const quantityElement = document.querySelector(`[data-order-item-id="${item.orderItemId}"] .quantity`);
+                if (quantityElement) {
+                    quantityElement.textContent = item.quantity;
+                }
+
+            } else {
+                // Check stock
+                if (1 > availableStock) {
+                    showAlert(`Cannot add. Only ${availableStock} available in stock.`);
+                    return;
+                }
+
+                const newItem = {
+                    ...foodItem,
+                    quantity: 1,
+                    free_quantity: 0,
+                    printed_quantity: 0,
+                    orderItemId: `item-${++orderItemCounter}`,
+                    isDiscountApplied: false,
+                    isPromotionApplied: false,
+                    isNew: true,
+                };
+                if (newItem.buy && newItem.get) {
+                    const groupCount = Math.floor(newItem.quantity / newItem.buy);
+                    newItem.free_quantity = groupCount * newItem.get;
+                    newItem.isPromotionApplied = groupCount > 0;
+                }
+
+                orderItems.push(newItem);
+                renderNewOrderItem(newItem);
+
+                if (orderItems.length === 1) {
+                    emptyOrderDiv.style.display = 'none';
+                }
+            }
+
+            updateOrderSummary();
+            filterAndRenderFoodItems();
+            scrollToBottom();
+            saveTableOrder();
+            reducefromsub();
+        }
+
+
+        function updateItemQuantity(orderItemId, newQuantity, newFreeQuantity = 0) {
+            const item = orderItems.find(i => i.orderItemId === orderItemId);
+            if (item) {
+                item.quantity = newQuantity;
+                item.free_quantity = newFreeQuantity;
+                // Do NOT reset printed_quantity here
+            } else {
+                console.warn("Item not found:", orderItemId);
+            }
+        }
+        function getUnprintedKOTItems() {
+            return orderItems
+                .filter(item => {
+                    const buy = parseInt(item.buy || 0);
+                    const get = parseInt(item.get || 0);
+                    const isDiscount = item.isDiscountApplied && buy > 0 && get > 0;
+
+                    let promotedFreeQty = 0;
+                    if (isDiscount) {
+                        const prorest = Math.floor(item.quantity / buy);
+                        promotedFreeQty = prorest * get;
+                    }
+
+                    const totalQty = item.quantity + (isDiscount ? promotedFreeQty : 0);
+                    return totalQty > (item.printed_quantity || 0); // Handle case where printed_quantity might be undefined
+                })
+                .map(item => {
+                    const buy = parseInt(item.buy || 0);
+                    const get = parseInt(item.get || 0);
+                    const isDiscount = item.isDiscountApplied && buy > 0 && get > 0;
+
+                    let promotedFreeQty = 0;
+                    let pricenew = item.price;
+
+                    if (isDiscount) {
+                        const prorest = Math.floor(item.quantity / buy);
+                        promotedFreeQty = prorest * get;
+                        const totalUnits = item.quantity + promotedFreeQty;
+                        pricenew = parseFloat(item.price) / totalUnits;
+                    }
+
+                    const totalQty = item.quantity + promotedFreeQty;
+                    const unprintedQty = totalQty - (item.printed_quantity || 0);
+
+                    return {
+                        ...item,
+                        quantity: unprintedQty,
+                        free_quantity: isDiscount ? promotedFreeQty : 0,
+                        pricenew: pricenew,
+                    };
+                });
+        }
+
+        function markItemsAsPrinted(kotItems) {
+            kotItems.forEach(kotItem => {
+                const item = orderItems.find(o => o.orderItemId === kotItem.orderItemId);
+                if (item) {
+                    item.printed_quantity += kotItem.quantity;
+                }
+            });
+
+            // Save the updated order items to localStorage
+            if (currentTable) {
+                saveTableOrder();
+            }
+        }
+
+
+
+
+        // Render a single new order item
+        function renderNewOrderItem(item) {
+            const orderItemEl = orderItemTemplate.content.cloneNode(true);
+            const div = orderItemEl.querySelector('.order-item');
+            div.dataset.foodId = item.id;
+            div.dataset.orderItemId = item.orderItemId;
+            const promotion = true;
+
+            // Set the item details (image, name, price, etc.)
+            orderItemEl.querySelector('[data-item-image]').src = `C:/Program Files/Hyper Selo/resources/app.asar.unpacked/uploads/${item.image_path}`;
+            orderItemEl.querySelector('[data-item-title]').textContent = item.title;
+            orderItemEl.querySelector('[data-item-buy]').textContent = item.buy;
+            orderItemEl.querySelector('[data-item-get]').textContent = item.get;
+            if (currentTable == "Take Away") {
+                orderItemEl.querySelector('[data-item-details]').textContent = `${item.type} - LKR ${parseFloat(item.price).toFixed(2)}`;
+            } else {
+                orderItemEl.querySelector('[data-item-details]').textContent = `${item.type} - LKR ${parseFloat(item.cost).toFixed(2)}`;
+
+            }
+            orderItemEl.querySelector('.quantity').textContent = item.quantity;
+
+            const discountCheckbox = orderItemEl.querySelector('.apply-discount-checkbox');
+            discountCheckbox.checked = item.isDiscountApplied;
+            discountCheckbox.addEventListener('change', () => {
+                const orderItem = orderItems.find(oi => oi.orderItemId === item.orderItemId);
+                if (orderItem) {
+                    orderItem.isDiscountApplied = discountCheckbox.checked;
+                    updateOrderSummary();
+                    saveTableOrder();
+                }
+            });
+
+            // Add event listeners for quantity buttons
+            orderItemEl.querySelector('.increment-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                updateQuantity(item.orderItemId, 1);
+            });
+
+            orderItemEl.querySelector('.decrement-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                updateQuantity(item.orderItemId, -1);
+            });
+
+            orderItemEl.querySelector('.remove-item-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeItem(item.orderItemId);
+            });
+
+            orderItemsList.appendChild(orderItemEl);
+        }
+
+        // Render all order items (used when clearing or initializing)
+        function renderOrderItems() {
+            orderItemsList.innerHTML = '';
+
+            if (orderItems.length === 0) {
+                emptyOrderDiv.style.display = 'block';
+                return;
+            }
+
+            emptyOrderDiv.style.display = 'none';
+            orderItems.forEach(item => {
+                renderNewOrderItem(item);
+            });
+        }
+
+        // Update quantity of specific item
+        function updateQuantity(orderItemId, change) {
+            const itemIndex = orderItems.findIndex(item => item.orderItemId === orderItemId);
+            if (itemIndex !== -1) {
+                const foodItem = orderItems[itemIndex];
+                const originalItem = allFoodItems.find(item => item.id === foodItem.id);
+                if (!originalItem) return;
+
+                const orderedQuantity = orderItems.reduce((total, orderItem) => {
+                    return orderItem.id === foodItem.id ?
+                        (orderItem.orderItemId === orderItemId ? total : total + orderItem.quantity)
+                        : total;
+                }, 0);
+
+                const availableStock = Math.max(0, originalItem.originalStock);
+
+                // For incrementing (+1), use addToOrder instead of manual quantity update
+                if (change > 0) {
+                    // Create a temporary copy of the item with quantity=1 to pass to addToOrder
+                    const itemToAdd = {
+                        ...foodItem,
+                        quantity: 1, // We're adding just 1 item
+                        free_quantity: 0, // Reset for the add operation
+                        orderItemId: foodItem.orderItemId // Keep the same ID
+                    };
+
+                    // Call addToOrder which will handle stock checks and promotion calculations
+                    addToOrder(itemToAdd, availableStock);
+                    return;
+                }
+
+                // For decrementing (-1), keep the existing logic
+                if (change < 0) {
+                    // Store old values before updating
+                    const oldQuantity = foodItem.quantity;
+                    const oldFreeQuantity = foodItem.free_quantity || 0;
+
+                    // Update quantity
+                    foodItem.quantity += change;
+
+                    // Recalculate promotion if applicable
+                    if (foodItem.buy && foodItem.get) {
+                        const groupCount = Math.floor(foodItem.quantity / foodItem.buy);
+                        foodItem.free_quantity = groupCount * foodItem.get;
+                        foodItem.isPromotionApplied = groupCount > 0;
+                    } else {
+                        foodItem.free_quantity = 0;
+                        foodItem.isPromotionApplied = false;
+                    }
+
+                    if (foodItem.quantity < 1) {
+                        removeItem(orderItemId);
+                    } else {
+                        const quantityElement = document.querySelector(`[data-order-item-id="${orderItemId}"] .quantity`);
+                        if (quantityElement) {
+                            quantityElement.textContent = foodItem.quantity + (foodItem.free_quantity || 0);
+                        }
+
+                        updateOrderSummary();
+                        saveTableOrder();
+                    }
+
+                    filterAndRenderFoodItems();
+                }
+            }
+        }
+
+
+        // Remove item from order
+        function removeItem(orderItemId) {
+            const itemIndex = orderItems.findIndex(item => item.orderItemId === orderItemId);
+            if (itemIndex === -1) return;
+
+            // Get the item before removing it
+            const removedItem = orderItems[itemIndex];
+
+            // Remove the item from the order
+            orderItems.splice(itemIndex, 1);
+
+            // Remove the DOM element
+            const itemElement = document.querySelector(`[data-order-item-id="${orderItemId}"]`);
+            if (itemElement) {
+                itemElement.remove();
+            }
+
+            // Show empty message if no items left
+            if (orderItems.length === 0) {
+                emptyOrderDiv.style.display = 'block';
+            }
+
+            updateOrderSummary();
+            filterAndRenderFoodItems(); // Update stock display
+            saveTableOrder();
+            monitorOrderItemsCount();
+        }
+        function monitorOrderItemsCount() {
+            // This function will be called whenever order items change
+            const currentCount = orderItems.length;
+
+            // Check if count changed from 1 to 0
+            if (currentCount == 0) {
+                clearCurrentTable();
+            }
+        }
+
+        // Update order summary
+        function updateOrderSummary() {
+            let subtotal = 0;
+            let happyDiscount = 0;
+
+            orderItems.forEach((item, index) => {
+
+                if (currentTable == "Take Away") {
+                    subtotal += (parseFloat(item.price) * item.quantity);
+                } else {
+                    subtotal += (parseFloat(item.cost) * item.quantity);
+                }
+                if (item.isDiscountApplied) {
+                    const buy = item.buy;
+                    const get = item.get;
+                    const nowqun = item.quantity;
+
+                    // Calculate bonus quantity
+                    const prorest = Math.floor(nowqun / buy);
+                    const newquntit = prorest * get;
+                    const orderItemEl = document.querySelectorAll('.order-item')[index];
+                    orderItemEl.querySelector('.quantity').textContent = item.quantity + newquntit;
+                } else {
+                    const buy = item.buy;
+                    const get = item.get;
+                    const nowqun = item.quantity;
+
+                    // Calculate bonus quantity
+                    const prorest = Math.floor(nowqun / buy);
+                    const newquntit = prorest * get;
+                    const orderItemEl = document.querySelectorAll('.order-item')[index];
+                    orderItemEl.querySelector('.quantity').textContent = item.quantity;
+                }
+
+                // Update DOM: assuming orderItemEls is a NodeList matching orderItems
+
+            });
+
+            var redsub = parseFloat(additional.value) || 0; // safely convert to number
+            var total = subtotal + redsub;
+            document.querySelector('.subtotal').textContent = `LKR ${total.toFixed(2)}`;
+
+
+            const manualDiscount = parseFloat(manualDiscountInput.value) || 0;
+            const totalDiscount = manualDiscount + happyDiscount;
+            redsub = parseFloat(additional.value) || 0; // convert to number safely
+            total = Math.max(0, subtotal + redsub - totalDiscount);
+
+            document.querySelector('.total').textContent = `LKR ${total.toFixed(2)}`;
+
+            updateBalance();
+        }
+
+        // Scroll to bottom of order items
+        function scrollToBottom() {
+            orderItemsContainer.scrollTo({
+                top: orderItemsContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        // Process checkout and update database
+        async function completeCheckout() {
+            position = "Checkout"
+            if (!currentTable) {
+                showAlert('Please select a table first');
+                return;
+            }
+
+            if (orderItems.length === 0) {
+                showAlert('Please add items to the order.');
+                return;
+            }
+
+            const cashReceived = parseFloat(cashReceivedInput.value) || 0;
+            const totalAmount = parseFloat(document.querySelector('.total').textContent.replace('LKR ', ''));
+            const paymentMethod = paymentMethodSelect.value;
+
+            if (paymentMethod === 'cash' && cashReceived < totalAmount) {
+                showAlert('Cash received is less than the total amount.');
+                return;
+            }
+
+            showAlerti("Are you sure you want to complete this order?");
+        }
+        let saveTimeout;
+        function autoSaveOrder() {
+            // Clear any pending save
+            clearTimeout(saveTimeout);
+
+            // Set a new timeout to save after a short delay (500ms)
+            saveTimeout = setTimeout(() => {
+                if (currentTable) {
+                    saveTableOrder();
+                }
+            }, 500);
+        }
+        // In addToOrder() function, add this at the end:
+        autoSaveOrder();
+
+        // In updateQuantity() function, add this after quantity changes:
+        autoSaveOrder();
+
+        // In removeItem() function, add this at the end:
+        autoSaveOrder();
+
+        // Add event listeners for inputs that affect the order:
+        document.getElementById('additional').addEventListener('input', autoSaveOrder);
+        document.getElementById('manual-discount-input').addEventListener('input', autoSaveOrder);
+        document.getElementById('percenteage-discount-input').addEventListener('input', autoSaveOrder);
+        document.getElementById('customer-phone').addEventListener('input', autoSaveOrder);
+        document.getElementById('customer-email').addEventListener('input', autoSaveOrder);
+        document.getElementById('cash-received').addEventListener('input', autoSaveOrder);
+        document.getElementById('payment-method').addEventListener('change', autoSaveOrder);
+        async function do_the_chekout() {
+            const orderData = {
+                tableNumber: currentTable,
+                additional: additional.value || 0,
+                disper: disper.value || 0,
+                customer_phone: customerPhoneInput.value.trim() || null,
+                customer_email: customerEmailInput.value.trim() || null,
+                subtotal: parseFloat(document.querySelector('.subtotal').textContent.replace('LKR ', '')),
+                discount: parseFloat(manualDiscountInput.value) || 0,
+                happy_discount: orderItems.reduce((sum, item) => item.isDiscountApplied ? sum + (item.discount * item.quantity) : sum, 0),
+                total: parseFloat(document.querySelector('.total').textContent.replace('LKR ', '')),
+                cash_received: paymentMethodSelect.value === 'cash' ? parseFloat(cashReceivedInput.value) || 0 : null,
+                payment_method: paymentMethodSelect.value,
+                username: localStorage.getItem('username'),
+                order_details: orderItems.map(item => {
+                    var pricenew = null;
+                    let promotedQuantity = item.quantity;
+                    if (item.isDiscountApplied) {
+                        const buy = parseInt(item.buy);
+                        const get = parseInt(item.get);
+                        const prorest = Math.floor(item.quantity / buy);
+                        promotedQuantity += prorest * get;
+                        pricenew = (parseInt(item.price) / (promotedQuantity + item.quantity));
+
+                    } else {
+                        pricenew = item.price;
+                    }
+
+                    return {
+                        product_id: item.product_id,
+                        title: item.title,
+                        product_name: item.type,
+                        quantity: promotedQuantity,
+                        original_quantity: item.quantity,
+                        price: item.price,
+                        get: item.get,
+                        buy: item.buy,
+                        cost: item.cost,
+                        applied_discount: item.isDiscountApplied ? item.discount : 0,
+                        is_promotion: item.isDiscountApplied
+                    }
+                })
+            };
+
+
+            try {
+                // const test = await fetch('http://127.0.0.1:8000/reduce_kitchen.php', {
+                //     method: 'POST',
+                //     headers: {
+                //         'Content-Type': 'application/json'
+                //     },
+                //     body: JSON.stringify({ order_details: orderData.order_details })
+                // });
+
+                ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+                // Prepare data for printing
+                const newKOTItems = orderItems.filter(item => item.isNew);
+
+                if (newKOTItems.length > 0) {
+
+                    const printData = {
+                        ...orderData,
+                        tableNumber: currentTable,
+
+                        order_details: newKOTItems.map(item => {
+                            let pricenew = null;
+                            let promotedQuantity = item.quantity;
+
+                            if (item.isDiscountApplied) {
+                                const buy = parseInt(item.buy);
+                                const get = parseInt(item.get);
+                                const prorest = Math.floor(item.quantity / buy);
+                                promotedQuantity += prorest * get;
+                            } else {
+                                promotedQuantity = 0;
+                            }
+
+                            return {
+                                product_id: item.product_id,
+                                title: item.title,
+                                product_name: item.type,
+                                proq: promotedQuantity,
+                                quantity: item.quantity,
+                                free_quantity: item.isPromotionApplied ? item.free_quantity : 0,
+                                price: item.price,
+                                get: item.get,
+                                buy: item.buy,
+                                cost: item.cost,
+                                applied_discount: item.isDiscountApplied ? item.discount : 0,
+                                orderItemId: item.orderItemId,
+                            };
+                        })
+
+                    };
+
+                    const kotItems = getUnprintedKOTItems();
+                    if (kotItems.length > 0) {
+                        const printResponse = await fetch('http://127.0.0.1:8000/printkot.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                tableNumber: currentTable,
+                                order_details: kotItems
+                            })
+                        });
+
+                        if (printResponse.ok) {
+                            // Mark items as printed quantity = current quantity (paid only)
+                            markItemsAsPrinted(kotItems);
+                        } else {
+                            console.error('Failed to print KOT:', await printResponse.text());
+                        }
+                    }
+
+
+                    orderItems.forEach(item => item.isNew = false);
+                }
+
+                if (position == "Checkout") {
+                    const response = await fetch('http://127.0.0.1:8000/process_order.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData)
+                    });
+                    const result = await response.json();
+                    const printData = {
+                        ...orderData,
+                        order_id: result.order_id
+                    };
+
+                    const printResponse = await fetch('http://127.0.0.1:8000/print.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(printData)
+                    });
+
+                    if (printResponse.ok) {
+                        var printResult = await printResponse.json();
+                        if (printResult.success) {
+                            showAlert('Order placed and receipt printed successfully!');
+                            setTimeout(() => {
+                                hideAlert();
+                            }, 500);
+                            // Clear the table order after successful checkout
+                            localStorage.removeItem(`table_order_${currentTable}`);
+                            document.querySelectorAll('.step').forEach(table => {
+                                if (table.dataset.tableNumber == currentTable) {
+                                    table.classList.remove('bg-red-100', 'border-red-600', 'text-red-500');
+                                    table.classList.remove('table-active');
+                                }
+                            });
+
+                            // Reset the current order
+                            orderItems = [];
+                            orderItemCounter = 0;
+                            renderOrderItems();
+                            updateOrderSummary();
+                            cashReceivedInput.value = '';
+                            customerPhoneInput.value = '';
+                            customerEmailInput.value = '';
+                            manualDiscountInput.value = '';
+                            currentTable = null;
+                            position = null;
+                            currentTableDisplay.textContent = 'Table: None';
+                            window.location.reload();
+                            await fetchFoodItems(page = currentPage, append = false);
+                        } else {
+                            showAlert(`Order placed successfully, but printing failed`);
+                        }
+                    }
+                } else {
+                    window.location.reload();
+                }
+
+            } catch (error) {
+                showAlert(error);
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,410 @@
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Return Items</title>
+        <link rel="stylesheet" href="css/font-aw.css" />
+        <script src="js/telwind.js"></script>
+        <style>
+            /* Custom styles */
+            .container {
+                max-width: 960px;
+                margin: 2rem auto;
+                padding: 1rem;
+            }
+
+            .input-group {
+                margin-bottom: 1rem;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: bold;
+            }
+
+            input[type="text"],
+            input[type="number"] {
+                width: 100%;
+                padding: 0.5rem;
+                border: 1px solid #ccc;
+                border-radius: 0.25rem;
+            }
+
+            button {
+                padding: 0.75rem 1.5rem;
+                background-color: #f97316;
+                color: white;
+                border: none;
+                border-radius: 0.25rem;
+                cursor: pointer;
+                font-size: 1rem;
+                transition: background-color 0.15s ease-in-out;
+            }
+
+            button:hover {
+                background-color: #ea580c;
+            }
+
+            #bill-preview {
+                margin-top: 2rem;
+                border: 1px solid #ccc;
+                border-radius: 0.25rem;
+                padding: 1rem;
+            }
+
+            .bill-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.5rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px dashed #eee;
+            }
+
+            .bill-item:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+                margin-bottom: 0;
+            }
+
+            .return-button {
+                background-color: #dc2626;
+            }
+
+            .return-button:hover {
+                background-color: #b91c1c;
+            }
+
+            /* Custom Alert Box */
+            .custom-alert-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            }
+
+            .custom-alert-box {
+                background-color: white;
+                padding: 20px;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                text-align: center;
+            }
+
+            .custom-alert-button {
+                padding: 10px 20px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-top: 15px;
+            }
+
+            .custom-alert-button:hover {
+                background-color: #0056b3;
+            }
+
+            /* Custom Confirm Box */
+            .custom-confirm-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1001;
+            }
+
+            .custom-confirm-box {
+                background-color: white;
+                padding: 20px;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                text-align: center;
+            }
+
+            .custom-confirm-buttons {
+                margin-top: 15px;
+            }
+
+            .custom-confirm-yes,
+            .custom-confirm-no {
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-weight: bold;
+            }
+
+            .custom-confirm-yes {
+                background-color: #e07229;
+                color: white;
+                border: none;
+                margin-right: 10px;
+            }
+
+            .custom-confirm-yes:hover {
+                background-color: #e66e1f;
+            }
+
+            .custom-confirm-no {
+                background-color: #b4afad;
+                color: white;
+                border: none;
+            }
+
+            .custom-confirm-no:hover {
+                background-color: #979191;
+            }
+        </style>
+    </head>
+
+    <body class="bg-gray-100">
+        <div class="container">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Initiate Item Return</h2>
+
+            <div class="input-group">
+                <label for="bill-id">Enter Order ID:</label>
+                <input type="text" id="bill-id" placeholder="Enter the Order ID">
+            </div>
+
+            <button id="load-bill-button" class="mb-4 bg-orange-500 p-2.5 text-white rounded-lg">Search Bill</button>
+
+            <div id="bill-preview" class="hidden bg-white p-4 rounded shadow">
+                <h3 class="text-xl font-semibold mb-2 text-gray-700">Order Summary</h3>
+                <div id="bill-details">
+                    <p class="text-gray-600">Awaiting order details...</p>
+                </div>
+                <div id="return-summary" class="mt-4 text-gray-700 font-semibold hidden"></div>
+            </div>
+        </div>
+
+        <div id="custom-alert" class="custom-alert-overlay hidden">
+            <div class="custom-alert-box">
+                <p id="custom-alert-message"></p>
+                <button id="custom-alert-ok" class="custom-alert-button">Got it!</button>
+            </div>
+        </div>
+
+        <div id="custom-confirm" class="custom-confirm-overlay hidden">
+            <div class="custom-confirm-box">
+                <p id="custom-confirm-message"></p>
+                <div class="custom-confirm-buttons">
+                    <button id="custom-confirm-yes" class="custom-confirm-yes">Return</button>
+                    <button id="custom-confirm-no" class="custom-confirm-no">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const billIdInput = document.getElementById('bill-id');
+                const loadBillButton = document.getElementById('load-bill-button');
+                const billPreviewDiv = document.getElementById('bill-preview');
+                const billDetailsDiv = document.getElementById('bill-details');
+                const customAlertOverlay = document.getElementById('custom-alert');
+                const customAlertMessage = document.getElementById('custom-alert-message');
+                const customAlertOkButton = document.getElementById('custom-alert-ok');
+                const returnSummaryDiv = document.getElementById('return-summary');
+                const customConfirmOverlay = document.getElementById('custom-confirm');
+                const customConfirmMessage = document.getElementById('custom-confirm-message');
+                const customConfirmYesButton = document.getElementById('custom-confirm-yes');
+                const customConfirmNoButton = document.getElementById('custom-confirm-no');
+
+                let currentBillItems = [];
+                let currentOrderTotal = 0;
+
+                function showCustomAlert(message) {
+                    customAlertMessage.textContent = message;
+                    customAlertOverlay.classList.remove('hidden');
+                }
+
+                customAlertOkButton.addEventListener('click', () => {
+                    customAlertOverlay.classList.add('hidden');
+                });
+
+                function showCustomConfirm(message) {
+                    return new Promise((resolve) => {
+                        customConfirmMessage.textContent = message;
+                        customConfirmOverlay.classList.remove('hidden');
+
+                        customConfirmYesButton.onclick = () => {
+                            customConfirmOverlay.classList.add('hidden');
+                            resolve(true);
+                        };
+
+                        customConfirmNoButton.onclick = () => {
+                            customConfirmOverlay.classList.add('hidden');
+                            resolve(false);
+                        };
+                    });
+                }
+
+                loadBillButton.addEventListener('click', async () => {
+                    const billId = billIdInput.value.trim();
+                    if (!billId) {
+                        showCustomAlert('Please enter the Order ID to proceed.');
+                        return;
+                    }
+
+                    billDetailsDiv.innerHTML = '<p class="text-gray-600">Fetching order details...</p>';
+                    billPreviewDiv.classList.remove('hidden');
+                    returnSummaryDiv.classList.add('hidden');
+                    currentBillItems = [];
+                    currentOrderTotal = 0;
+
+                    try {
+                        const response = await fetch(`http://127.0.0.1:8000/get_bill_details.php?order_id=${billId}`);
+                        const data = await response.json();
+
+                        if (data.error) {
+                            billDetailsDiv.innerHTML = `<p class="text-red-500">Oh snap! ${data.error}</p>`;
+                        } else if (data.order && data.items) {
+                            currentOrderTotal = parseFloat(data.order.total);
+                            displayBillDetails(data.order, data.items);
+                        } else {
+                            billDetailsDiv.innerHTML = '<p class="text-gray-600">Hmm, no order found with that ID.</p>';
+                        }
+                    } catch (error) {
+                        console.error('Error fetching order details:', error);
+                        billDetailsDiv.innerHTML = '<p class="text-red-500">Oops! Something went wrong while fetching order details.</p>';
+                    }
+                });
+
+                function displayBillDetails(order, items) {
+                    let html = `
+                        <p class="mb-2"><strong class="text-gray-700">Order ID:</strong> ${order.order_id}</p>
+                        <p class="mb-2"><strong class="text-gray-700">Order Date:</strong> ${order.order_date}</p>
+                        <p class="mb-2"><strong class="text-gray-700">Total Amount:</strong> ${parseFloat(order.total).toFixed(2)}</p>
+                        <h4 class="text-lg font-semibold mb-2 text-gray-700">Select items for return:</h4>
+                    `;
+
+                    if (items.length > 0) {
+                        html += '<ul class="list-none p-0">';
+                        items.forEach(item => {
+                            html += `
+                                <li class="bill-item">
+                                    <span>${item.title} (Qty: ${item.quantity}, Price: ${parseFloat(item.price).toFixed(2)})</span>
+                                    <div class="flex items-center">
+                                        <label for="return-qty-${item.id}" class="mr-2 text-sm text-gray-600">Return Qty:</label>
+                                        <input type="number" id="return-qty-${item.id}" min="0" max="${item.quantity}" value="0" class="w-20 text-sm border rounded py-1 px-2 return-qty-input" data-max-qty="${item.quantity}">
+                                        <button class="return-button ml-2 text-white text-sm py-1 px-2 rounded" data-item-id="${item.id}" data-product-id="${item.product_id}" data-order-id="${order.order_id}" data-max-qty="${item.quantity}" data-item-price="${item.price}">Return</button>
+                                    </div>
+                                </li>
+                            `;
+                        });
+                        html += '</ul>';
+                        currentBillItems = items;
+                    } else {
+                        html += '<p class="text-gray-600">This order has no items.</p>';
+                    }
+
+                    billDetailsDiv.innerHTML = html;
+
+                    // Add event listeners to all return buttons
+                    document.querySelectorAll('.return-button').forEach(button => {
+                        button.addEventListener('click', initiateItemReturn);
+                    });
+
+                    // Add input event listeners to quantity inputs for validation
+                    document.querySelectorAll('.return-qty-input').forEach(input => {
+                        input.addEventListener('input', function () {
+                            const maxQty = parseInt(this.dataset.maxQty);
+                            let value = parseInt(this.value);
+                            if (isNaN(value) || value < 0) {
+                                this.value = 0;
+                            } else if (value > maxQty) {
+                                this.value = maxQty;
+                            }
+                        });
+                    });
+                }
+
+                async function initiateItemReturn(event) {
+                    const button = event.currentTarget;
+                    const itemId = button.dataset.itemId;
+                    const productId = button.dataset.productId;
+                    const orderId = button.dataset.orderId;
+                    const maxReturnQty = parseInt(button.dataset.maxQty);
+                    const itemPrice = parseFloat(button.dataset.itemPrice);
+                    const returnQtyInput = document.getElementById(`return-qty-${itemId}`);
+                    const returnQuantity = parseInt(returnQtyInput.value);
+
+                    if (isNaN(returnQuantity)) {
+                        showCustomAlert('Please enter a valid quantity to return.');
+                        return;
+                    }
+
+                    if (returnQuantity < 0) {
+                        showCustomAlert('Return quantity cannot be a negative number.');
+                        return;
+                    }
+
+                    if (returnQuantity > maxReturnQty) {
+                        showCustomAlert(`Whoops! You can't return more than ${maxReturnQty} of this item.`);
+                        return;
+                    }
+
+                    if (returnQuantity === 0) {
+                        showCustomAlert('Please specify how many items you wish to return.');
+                        return;
+                    }
+
+                    const item = currentBillItems.find(item => item.id == itemId);
+                    if (!item) {
+                        showCustomAlert('Something went wrong, item not found in the order.');
+                        return;
+                    }
+
+                    const confirmation = await showCustomConfirm(`Are you sure you want to return ${returnQuantity} of ${item.title}?`);
+                    if (!confirmation) return;
+
+                    // Show processing message
+                    showCustomAlert(`Processing return of ${returnQuantity} ${item.title}...`);
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('order_id', orderId);
+                        formData.append('product_id', productId);
+                        formData.append('quantity', returnQuantity);
+                        formData.append('order_item_id', itemId);
+                        formData.append('item_price', itemPrice); // Send item price for accurate refund calculation
+
+                        const response = await fetch('http://127.0.0.1:8000/process_item_return.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await response.json();
+
+                        if (data.success) {
+                            showCustomAlert(`${returnQuantity} ${item.title} returned successfully. Refund amount: ${parseFloat(data.return_amount).toFixed(2)}`);
+                            // Update the displayed bill details
+                            loadBillButton.click();
+                            // Display the amount to be given back to the customer
+                            returnSummaryDiv.textContent = `Refund to be issued: ${parseFloat(data.return_amount).toFixed(2)}`;
+                            returnSummaryDiv.classList.remove('hidden');
+                        } else {
+                            showCustomAlert(`Return failed: ${data.error || 'An unexpected error occurred.'}`);
+                        }
+                    } catch (error) {
+                        console.error('Error processing return:', error);
+                        showCustomAlert(' Something went wrong during the return process.');
+                    }
+                }
+            });
+        </script>
+    </body>
+
+    </html>

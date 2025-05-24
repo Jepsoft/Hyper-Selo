@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battery Management System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f9fafb;
+            color: #374151;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            color: #4b5563;
+            z-index: 1;
+        }
+
+        .main-content {
+            display: flex;
+            justify-content: space-between;
+            flex-grow: 1;
+            gap: 30px;
+            z-index: 1;
+        }
+
+        .left-panel,
+        .right-panel {
+            width: 200px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .center-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-section,
+        .remove-section {
+            background-color: #fff;
+            padding: 25px;
+            width: 50%;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-section h2,
+        .remove-section h2 {
+            color: #f97316;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-weight: bold;
+        }
+
+        .form-group select,
+        .form-group input[type="number"] {
+            width: calc(100% - 12px);
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .submit-button,
+        .remove-button {
+            background-color: #f97316;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s ease-in-out;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .submit-button:hover,
+        .remove-button:hover {
+            background-color: #ea580c;
+        }
+
+        .message-container {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .success {
+            color: #22c55e;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        .data-section {
+            margin-top: auto;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #e5e7eb;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: #d1d1d1;
+            color: #000;
+            font-weight: 600;
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background-color: #f3f4f6;
+        }
+
+        .left-panel h3,
+        .right-panel h3 {
+            color: #f97316;
+            margin-bottom: 10px;
+        }
+
+        /* Custom Alert Styles */
+        .custom-alert-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .custom-alert-box {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .custom-alert-message {
+            color: #374151;
+            margin-bottom: 15px;
+        }
+
+        .custom-alert-button {
+            background-color: #f97316;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .custom-alert-button:hover {
+            background-color: #ea580c;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="blur-background"></div>
+    <div class="header">
+        <h1>Battery Inventory Management</h1>
+    </div>
+    <div class="main-content ">
+        <div class="form-section">
+            <h2>Add New Battery</h2>
+            <form id="batteryForm">
+                <div class="form-group">
+                    <label for="type">Type:</label>
+                    <select id="type" name="type">
+                        <option value="motorbike">Motorbike</option>
+                        <option value="vehicle">Vehicle</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ah">Ampere-Hour (Ah):</label>
+                    <select id="ah" name="ah">
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Quantity:</label>
+                    <input type="number" id="quantity" name="quantity" min="1">
+                </div>
+                <button type="button" class="submit-button" id="submitBtn">Add Battery</button>
+            </form>
+            <div id="message" class="message-container">
+            </div>
+        </div>
+
+        <div class="remove-section">
+            <h2>Remove Battery</h2>
+            <form id="removeBatteryForm">
+                <div class="form-group">
+                    <label for="removeBatteryId">Select Battery to Remove:</label>
+                    <select id="removeBatteryId" name="removeBatteryId">
+                        <option value="">-- Select Battery ID --</option>
+                    </select>
+                </div>
+                <div class="form-group" id="removeQuantityGroup" style="display:none;">
+                    <label for="removeQuantity">Quantity to Remove:</label>
+                    <input type="number" id="removeQuantity" name="removeQuantity" min="1">
+                    <p id="availableQuantity" style="font-size: 0.9em; color: #718096; margin-top: 5px;"></p>
+                </div>
+                <button type="button" class="remove-button" id="removeBtn" style="display:none;">Remove Battery</button>
+            </form>
+            <div id="removeMessage" class="message-container">
+            </div>
+        </div>
+    </div>
+    <div class="data-section">
+        <h2>Old Battery Inventory</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Ah</th>
+                    <th>Quantity</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody id="batteryDataBody">
+            </tbody>
+        </table>
+    </div>
+
+    <div id="customAlertOverlay" class="custom-alert-overlay">
+        <div id="customAlertBox" class="custom-alert-box">
+            <p id="customAlertMessage" class="custom-alert-message"></p>
+            <button id="customAlertButton" class="custom-alert-button">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const typeSelect = document.getElementById('type');
+        const ahSelect = document.getElementById('ah');
+        const submitBtn = document.getElementById('submitBtn');
+        const batteryForm = document.getElementById('batteryForm');
+        const messageDiv = document.getElementById('message');
+        const batteryDataBody = document.getElementById('batteryDataBody');
+
+        // Elements for the remove functionality
+        const removeBatteryIdSelect = document.getElementById('removeBatteryId');
+        const removeBtn = document.getElementById('removeBtn');
+        const removeBatteryForm = document.getElementById('removeBatteryForm');
+        const removeMessageDiv = document.getElementById('removeMessage');
+        const removeQuantityGroup = document.getElementById('removeQuantityGroup');
+        const removeQuantityInput = document.getElementById('removeQuantity');
+        const availableQuantityParagraph = document.getElementById('availableQuantity');
+        let currentAvailableQuantity = 0;
+
+        // Custom Alert Elements
+        const customAlertOverlay = document.getElementById('customAlertOverlay');
+        const customAlertBox = document.getElementById('customAlertBox');
+        const customAlertMessage = document.getElementById('customAlertMessage');
+        const customAlertButton = document.getElementById('customAlertButton');
+
+        const ahOptionsMotorbikeVehicle = [2.5, 4, 5, 7, 9, 25, 35, 45, 65, 70, 90, 100, 120, 150, 200];
+
+        function updateAhOptions(selectElement, selectedType) {
+            selectElement.innerHTML = ''; // Clear previous options
+            if (selectedType === 'motorbike' || selectedType === 'vehicle') {
+                ahOptionsMotorbikeVehicle.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    selectElement.appendChild(option);
+                });
+            } else {
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select Ah';
+                selectElement.appendChild(defaultOption);
+            }
+        }
+
+        function showCustomAlert(message) {
+            customAlertMessage.textContent = message;
+            customAlertOverlay.style.display = 'flex';
+        }
+
+        customAlertButton.addEventListener('click', () => {
+            customAlertOverlay.style.display = 'none';
+        });
+
+        function loadBatteryData() {
+            fetch('http://127.0.0.1:8000/process_battery.php?action=get')
+                .then(response => response.json())
+                .then(data => {
+                    batteryDataBody.innerHTML = ''; // Clear existing data
+                    removeBatteryIdSelect.innerHTML = '<option value="">-- Select Battery ID --</option>'; // Reset ID options
+                    if (data.length > 0) {
+                        data.forEach(item => {
+                            const row = batteryDataBody.insertRow();
+                            const typeCell = row.insertCell();
+                            const ahCell = row.insertCell();
+                            const quantityCell = row.insertCell();
+                            const discount = row.insertCell();
+                            typeCell.textContent = item.type;
+                            ahCell.textContent = item.ah;
+                            quantityCell.textContent = item.quntity;
+                            discount.textContent = item.date;
+
+                            // Add option to the remove select
+                            const idOption = document.createElement('option');
+                            idOption.value = item.id;
+                            idOption.dataset.quantity = item.quntity; // Store quantity in data attribute
+                            idOption.textContent = item.id + ' (' + item.type + ' - ' + item.ah + 'Ah)';
+                            removeBatteryIdSelect.appendChild(idOption);
+                        });
+                    } else {
+                        const row = batteryDataBody.insertRow();
+                        const cell = row.insertCell();
+                        cell.colSpan = 5;
+                        cell.textContent = 'No battery data available.';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading battery data:', error);
+                    showCustomAlert('Failed to load battery data.');
+                });
+        }
+
+        submitBtn.addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const formData = new FormData(batteryForm);
+
+            fetch('http://127.0.0.1:8000/process_battery.php?action=add', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showCustomAlert(data.message);
+                    loadBatteryData(); // Reload data after adding
+                    batteryForm.reset();
+                })
+                .catch(error => {
+                    console.error('Error submitting form:', error);
+                    showCustomAlert('Failed to add battery.');
+                });
+        });
+
+        removeBatteryIdSelect.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                currentAvailableQuantity = parseInt(selectedOption.dataset.quantity, 10);
+                availableQuantityParagraph.textContent = `Available Quantity: ${currentAvailableQuantity}`;
+                removeQuantityGroup.style.display = 'block';
+                removeBtn.style.display = 'block';
+                removeQuantityInput.value = 1; // Reset quantity to 1
+                removeQuantityInput.max = currentAvailableQuantity;
+            } else {
+                removeQuantityGroup.style.display = 'none';
+                removeBtn.style.display = 'none';
+                availableQuantityParagraph.textContent = '';
+                removeQuantityInput.value = '';
+            }
+        });
+
+        removeBtn.addEventListener('click', function (event) {
+            event.preventDefault();
+
+            const batteryIdToRemove = removeBatteryIdSelect.value;
+            const quantityToRemove = parseInt(removeQuantityInput.value, 10);
+
+            if (!batteryIdToRemove) {
+                showCustomAlert('Please select a battery to remove.');
+                return;
+            }
+
+            if (isNaN(quantityToRemove) || quantityToRemove < 1) {
+                showCustomAlert('Please enter a valid quantity to remove.');
+                return;
+            }
+
+            if (quantityToRemove > currentAvailableQuantity) {
+                showCustomAlert(`Cannot remove ${quantityToRemove} batteries. Only ${currentAvailableQuantity} available.`);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('removeBatteryId', batteryIdToRemove);
+            formData.append('removeQuantity', quantityToRemove);
+
+            fetch('http://127.0.0.1:8000/process_battery.php?action=remove', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showCustomAlert(data.message);
+                    loadBatteryData(); // Reload data after removing
+                    removeBatteryForm.reset();
+                    removeQuantityGroup.style.display = 'none';
+                    removeBtn.style.display = 'none';
+                    availableQuantityParagraph.textContent = '';
+                })
+                .catch(error => {
+                    console.error('Error removing battery:', error);
+                    showCustomAlert('Failed to remove battery.');
+                });
+        });
+
+        typeSelect.addEventListener('change', function () {
+            updateAhOptions(ahSelect, this.value);
+        });
+
+        updateAhOptions(ahSelect, typeSelect.value); // Initial population of Ah options for Add form
+        loadBatteryData(); // Load initial battery data
+    </script>
+</body>
+
+</html>

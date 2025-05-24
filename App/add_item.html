@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper Selo</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/font-aw.css">
+    <script src="js/script.js"></script>
+    <script>
+        function previewImage(input) {
+            const preview = document.getElementById('image-preview');
+            const uploadPlaceholder = document.getElementById('upload-placeholder');
+            const previewWrapper = document.getElementById('image-preview-wrapper');
+            const file = input.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    preview.src = reader.result;
+                    uploadPlaceholder.classList.add('hidden');
+                    previewWrapper.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = '#';
+                uploadPlaceholder.classList.remove('hidden');
+                previewWrapper.classList.add('hidden');
+            }
+        }
+
+        function resetImage() {
+            const preview = document.getElementById('image-preview');
+            const uploadPlaceholder = document.getElementById('upload-placeholder');
+            const previewWrapper = document.getElementById('image-preview-wrapper');
+            const imageUploadInput = document.getElementById('image-upload');
+
+            preview.src = '#';
+            imageUploadInput.value = ''; // Clear the file input
+            uploadPlaceholder.classList.remove('hidden');
+            previewWrapper.classList.add('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const imageUploadContainer = document.getElementById('image-upload-container');
+            const imageUploadInput = document.getElementById('image-upload');
+            const uploadPlaceholder = document.getElementById('upload-placeholder');
+            const browseButton = uploadPlaceholder.querySelector('button');
+            const typeDropdown = document.getElementById('type');
+            const tagDropdown = document.getElementById('tag');
+            const priceInput = document.getElementById('price');
+            const discountPriceInput = document.getElementById('DiscountPrice');
+            const discountPercentageInput = document.getElementById('DiscountPercentage');
+
+            // Sample data for type and tag dropdowns (replace with your actual data fetching logic)
+            const itemTypes = [
+                'Biryani', 'Boiled', 'Cheese Kottu', 'Chilli', 'Chopsuey', 'Chopsuey Rice',
+                'Curry', 'Dessert', 'Devilled', 'Drink', 'Fried', 'Fried Rice', 'Grilled',
+                'Hot Butter', 'Kottu', 'Noodles', 'Omelet', 'Other', 'Short Eats',
+                'Pepper', 'Pasta', 'R&C Breakfast', 'R&C Lunch', 'Snacks', 'Soup', 'Spaghetti', 'Stew',
+            ]
+
+
+            itemTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                typeDropdown.appendChild(option);
+            });
+
+
+
+            imageUploadContainer.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                imageUploadContainer.classList.add('border-orange-500');
+            });
+
+            imageUploadContainer.addEventListener('dragleave', function () {
+                imageUploadContainer.classList.remove('border-orange-500');
+            });
+
+            imageUploadContainer.addEventListener('drop', function (e) {
+                e.preventDefault();
+                imageUploadContainer.classList.remove('border-orange-500');
+                imageUploadInput.files = e.dataTransfer.files;
+                previewImage(imageUploadInput);
+            });
+
+            browseButton.addEventListener('click', function () {
+                imageUploadInput.click();
+            });
+
+            imageUploadInput.addEventListener('change', function () {
+                previewImage(this);
+            });
+
+            function updateDiscountPercentage() {
+                const price = parseFloat(priceInput.value);
+                const discountPrice = parseFloat(discountPriceInput.value);
+
+                if (!isNaN(price) && !isNaN(discountPrice)) {
+                    if (price > 0) {
+                        const discountPercentage = ((discountPrice / price) * 100).toFixed(2);
+                        discountPercentageInput.value = discountPercentage;
+                    } else {
+                        discountPercentageInput.value = '';
+                    }
+                } else {
+                    discountPercentageInput.value = '';
+                }
+            }
+
+            function updateDiscountPrice() {
+                const price = parseFloat(priceInput.value);
+                const discountPercentage = parseFloat(discountPercentageInput.value);
+
+                if (!isNaN(price) && !isNaN(discountPercentage)) {
+                    const discountPrice = ((discountPercentage / 100) * price).toFixed(2);
+                    discountPriceInput.value = discountPrice;
+                } else {
+                    discountPriceInput.value = '';
+                }
+            }
+
+            priceInput.addEventListener('input', () => {
+                updateDiscountPercentage();
+            });
+
+            discountPriceInput.addEventListener('input', () => {
+                updateDiscountPercentage();
+            });
+
+            discountPercentageInput.addEventListener('input', () => {
+                updateDiscountPrice();
+            });
+
+
+            const addItemForm = document.querySelector('form');
+
+            addItemForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const formData = new FormData(addItemForm);
+
+                try {
+                    const response = await fetch('http://127.0.0.1:8000/add_item.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        setTimeout(() => {
+                            showAlert('Item added successfully!');
+                        }, 1500);
+                        window.location.reload();
+                    } else {
+                        setTimeout(() => {
+                            showAlert('Error adding item: ' + data.error);
+                        }, 2000);
+                        window.location.reload();
+                    }
+
+                } catch (error) {
+                    console.error('Error adding item:', error);
+                    alert('Failed to add item. Please try again.', error);
+                }
+            });
+        });
+
+        function showAlert(message) {
+            // Set the custom message to the alert text container
+            document.getElementById('alertText').innerHTML = message;
+
+            // Show the alert and overlay
+            document.getElementById('customAlert').classList.remove('hidden');
+            document.getElementById('overlay').classList.remove('hidden');
+        }
+
+        // Function to hide the custom alert
+        function hideAlert() {
+            document.getElementById('customAlert').classList.add('hidden');
+            document.getElementById('overlay').classList.add('hidden');
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50 flex max-h-screen justify-center items-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <button onclick="window.location.href='loaditems.html'"
+        class="absolute top-10 left-10 items-center px-4 py-2 hover:bg-orange-600 bg-orange-500 duration-300 hover:duration-300 hover:scale-105 text-white font-semibold rounded-lg shadow-md">
+        Back
+    </button>
+    <div id="overlay" class="fixed inset-0 z-50 bg-black opacity-50 hidden"></div>
+
+    <div id="customAlert" class="fixed inset-0 flex justify-center items-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+            <div class="mb-4">
+                <h2 class="text-xl font-semibold text-center">Alert</h2>
+            </div>
+            <div id="alertText" class="mb-4 text-center">
+            </div>
+            <div class="flex justify-center">
+                <button id="okButton" onclick="hideAlert();"
+                    class="bg-gray-500 text-white  min-w-[100px] px-4 py-2 rounded-md">Done</button>
+            </div>
+        </div>
+    </div>
+    <div class="bg-gray-50 rounded-lg w-full md:mt-[20%] lg:mt-auto p-8 md:p-12 ">
+        <h2 class="text-3xl font-semibold text-gray-800 mb-8 text-center">Add New Item</h2>
+        <form class="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-8" enctype="multipart/form-data">
+
+            <div class="sm:col-span-2">
+                <label for="image-upload" class="block text-sm font-medium text-gray-700 mb-2">
+                    Image:
+                </label>
+                <div id="image-upload-container"
+                    class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center cursor-pointer relative flex flex-col justify-center items-center h-48 bg-gray-50 hover:border-orange-500 transition-colors duration-200">
+                    <input type="file" id="image-upload" name="image" accept="image/*"
+                        class="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                        onchange="previewImage(this)">
+                    <div id="upload-placeholder" class="flex flex-col justify-center items-center">
+                        <i class="fa-solid fa-cloud-arrow-up text-gray-500 text-2xl mb-2"></i>
+                        <p class="text-sm text-gray-600 mb-2">Drag and drop image here</p>
+                        <button type="button"
+                            class="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-100 focus:outline-none focus:ring-orange-500 focus:ring-offset-2 transition-colors duration-200">Browse
+                            Files</button>
+                    </div>
+                    <div id="image-preview-wrapper" class="hidden">
+                        <img id="image-preview" src="#" alt="Image Preview"
+                            class="max-w-full max-h-32 rounded-md shadow-sm object-contain">
+                        <button type="button"
+                            class="absolute top-2 right-2 bg-gray-100 rounded-full p-1 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            onclick="resetImage()">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Allowed file types: JPG, JPEG, PNG. Max size: 2MB.</p>
+            </div>
+
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                    Item Name
+                </label>
+                <input type="text" id="title" name="title" placeholder="Enter item title" required
+                    class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3">
+            </div>
+
+            <div>
+                <label for="type" class="block text-sm font-medium text-gray-700 mb-2">
+                    Category
+                </label>
+                <select id="type" name="type" required
+                    class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3">
+                    <option value="" disabled selected>Select Brand</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
+                    Takeaway Price
+                </label>
+                <input type="number" id="price" name="price" placeholder="Takeaway Price" required step="0.01"
+                    class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3">
+            </div>
+
+            <div>
+                <label for="cost" class="block text-sm font-medium text-gray-700 mb-2">
+                    Dining Price
+                </label>
+                <input type="number" id="cost" name="cost" placeholder="Dining Price" required step="0.01"
+                    class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3">
+            </div>
+            <div>
+                <label for="stock" class="block text-sm font-medium text-gray-700 mb-2">
+                    Stock
+                </label>
+                <input type="number" id="stock" name="stock" placeholder="Enter stock" required
+                    class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3">
+            </div>
+            <div class="w-full hidden">
+                <label for="DiscountPrice" class="block text-sm font-medium text-gray-700 mb-2">
+                    Discount (LKR)
+                </label>
+                <input type="number" id="DiscountPrice" name="Discount" placeholder="Enter Discount Price" step="0.01"
+                    class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3">
+            </div>
+            <div class="w-full hidden">
+                <label for="DiscountPercentage" class="block text-sm font-medium text-gray-700 mb-2">
+                    Discount (%)
+                </label>
+                <input type="number" id="DiscountPercentage" name="DiscountPercentage"
+                    placeholder="Enter Discount Percentage" step="0.01"
+                    class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3">
+            </div>
+            <div class="flex justify-between">
+                <div class="w-[45%]">
+                    <label for="type" class="block text-sm font-medium text-gray-700 mb-2">
+                        Buy Quantity
+                    </label>
+                    <select id="buy" name="buy" required
+                        class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3">
+                        <option value="1" selected>Select Buy Quantity</option>
+                        <option value="1">Buy 01</option>
+                        <option value="2">Buy 02</option>
+                        <option value="3">Buy 03</option>
+                        <option value="4">Buy 04</option>
+                        <option value="5">Buy 05</option>
+                        <option value="6">Buy 06</option>
+                        <option value="7">Buy 07</option>
+                        <option value="8">Buy 08</option>
+                        <option value="9">Buy 09</option>
+                    </select>
+                </div>
+                <div class="w-[45%]">
+                    <label for="buy" class="block text-sm font-medium text-gray-700 mb-2">
+                        Free Quantity
+                    </label>
+                    <select id="get" name="get" required
+                        class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3">
+                        <option value="0" selected>Select Brand</option>
+                        <option value="1">Free 01</option>
+                        <option value="2">Free 02</option>
+                        <option value="3">Free 03</option>
+                        <option value="4">Free 04</option>
+                        <option value="5">Free 05</option>
+                        <option value="6">Free 06</option>
+                        <option value="7">Free 07</option>
+                        <option value="8">Free 08</option>
+                        <option value="9">Free 09</option>
+                    </select>
+                </div>
+            </div>
+            <div class="sm:col-span-2">
+                <button type="submit"
+                    class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                    Add Item
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

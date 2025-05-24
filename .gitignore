@@ -1,0 +1,46 @@
+# Node modules
+node_modules/
+
+# PHP Composer dependencies
+vendor/
+
+# Custom debug or dump folders
+dump_php/
+
+# Hidden project folders (e.g., .qodo)
+.qodo/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment and configuration files
+.env
+.env.local
+.env.*.local
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# Backup and temp files
+*.bak
+*.tmp
+*.swp
+*.~*
+
+# Node build artifacts
+dist/
+build/
+mike42/
