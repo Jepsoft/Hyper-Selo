@@ -11,6 +11,7 @@ try {
 
 let mainWindow = null;
 let phpServerProcess = null;
+let progressWindow = null;
 
 // 🐘 Start PHP server
 const startPHPServer = () => {
@@ -66,6 +67,40 @@ const createMainWindow = () => {
         .catch(error => console.error("⚠ Error clearing storage data:", error));
 };
 
+// 🌀 Create Progress Window
+const createProgressWindow = () => {
+    if (progressWindow) {
+        progressWindow.show();
+        return;
+    }
+
+    progressWindow = new BrowserWindow({
+        width: 400,
+        height: 250,
+        resizable: false,
+        frame: false,
+        show: false,
+        transparent: true,
+        alwaysOnTop: true,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    });
+
+    progressWindow.loadFile(path.join(__dirname, 'App', 'update-progress.html'));
+
+    progressWindow.on('closed', () => {
+        progressWindow = null;
+    });
+
+    progressWindow.once('ready-to-show', () => {
+        progressWindow.show();
+    });
+
+    return progressWindow;
+};
+
 // 🔄 Auto Updater Logic
 const setupAutoUpdater = () => {
     if (!autoUpdater) return;
@@ -76,25 +111,74 @@ const setupAutoUpdater = () => {
         dialog.showMessageBox({
             type: 'info',
             title: 'Update Available',
-            message: 'A new update is being downloaded.'
-        });
-    });
-
-    autoUpdater.on('update-downloaded', () => {
-        dialog.showMessageBox({
-            type: 'info',
-            title: 'Update Ready',
-            message: 'Update downloaded. Restart now to apply?',
-            buttons: ['Yes', 'Later']
+            message: 'A new version is available!',
+            detail: 'Would you like to download and install it now?',
+            buttons: ['Download Update', 'Remind Me Later'],
+            defaultId: 0,
+            cancelId: 1
         }).then(result => {
             if (result.response === 0) {
-                autoUpdater.quitAndInstall();
+                // User chose to download update
+                const progressWin = createProgressWindow();
+                
+                // Update progress window with download status
+                progressWin.webContents.send('update-status', {
+                    status: 'Downloading update...',
+                    percent: 0,
+                    speed: '0 KB/s'
+                });
+
+                // Track download progress
+                autoUpdater.on('download-progress', (progressObj) => {
+                    const percent = Math.floor(progressObj.percent);
+                    const speed = Math.floor(progressObj.bytesPerSecond / 1024);
+                    progressWin.webContents.send('update-status', {
+                        status: 'Downloading update...',
+                        percent: percent,
+                        speed: `${speed} KB/s`
+                    });
+                });
+
+                autoUpdater.on('update-downloaded', () => {
+                    progressWin.webContents.send('update-status', {
+                        status: 'Update downloaded!',
+                        percent: 100,
+                        speed: '0 KB/s'
+                    });
+
+                    // Show restart prompt after 1.5 seconds
+                    setTimeout(() => {
+                        if (progressWin) progressWin.close();
+                        
+                        dialog.showMessageBox({
+                            type: 'info',
+                            title: 'Update Ready',
+                            message: 'Update downloaded successfully!',
+                            detail: 'The application will restart to install the update.',
+                            buttons: ['Restart Now', 'Later'],
+                            defaultId: 0,
+                            cancelId: 1
+                        }).then(restartResult => {
+                            if (restartResult.response === 0) {
+                                autoUpdater.quitAndInstall();
+                            }
+                        });
+                    }, 1500);
+                });
             }
         });
     });
 
     autoUpdater.on('error', (err) => {
         console.error("⚠ Auto-updater error:", err);
+        if (progressWindow) progressWindow.close();
+        
+        dialog.showMessageBox({
+            type: 'error',
+            title: 'Update Error',
+            message: 'Failed to download update',
+            detail: err.toString()
+        });
     });
 };
 
@@ -117,6 +201,10 @@ app.on('before-quit', () => {
         console.log("🛑 Stopping PHP server...");
         phpServerProcess.kill('SIGTERM');
         phpServerProcess = null;
+    }
+    
+    if (progressWindow) {
+        progressWindow.close();
     }
 });
 
