@@ -3,11 +3,7 @@ const path = require('path');
 const { exec } = require('child_process');
 
 let autoUpdater;
-try {
     autoUpdater = require('electron-updater').autoUpdater;
-} catch (e) {
-    console.warn("⚠ Could not load 'electron-updater'. It might be missing in dev mode or not bundled.");
-}
 
 let mainWindow = null;
 let phpServerProcess = null;

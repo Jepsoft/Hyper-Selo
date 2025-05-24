@@ -1,6 +1,6 @@
 {
   "name": "hyper-selo",
-  "version": "1.0.0",
+  "version": "1.0.01",
   "description": "Jepsoft POS System",
   "author": "Jepsoft",
   "main": "main.js",
@@ -8,11 +8,12 @@
     "start": "electron .",
     "build": "electron-builder"
   },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
+  },
   "devDependencies": {
     "electron": "^35.1.2",
-    "electron-builder": "^24.13.3",
-    "electron-updater": "^6.6.2"
-
+    "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "com.jepsoft.hyperselo",
